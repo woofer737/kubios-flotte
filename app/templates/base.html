@@ -36,6 +36,7 @@
             <li><a class="dropdown-item" href="{{ url_for('tools.categories') }}">Catégories</a></li>
           </ul>
         </li>
+        <li class="nav-item"><a class="nav-link {{ 'active' if ep.startswith('reports') }}" href="{{ url_for('reports.index') }}"><i class="bi bi-file-earmark-bar-graph"></i> Rapports</a></li>
         {% if current_user.is_admin %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle {{ 'active' if ep.startswith('admin') }}" href="#" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Administration{% if update_available %} <span class="badge rounded-pill text-bg-warning" title="Mise à jour disponible">1</span>{% endif %}</a>

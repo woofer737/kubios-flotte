@@ -162,7 +162,32 @@ def driver_edit(did=None):
 @bp.route("/garages")
 @login_required
 def garages():
-    return render_template("vehicles/garages.html", garages=Garage.query.order_by(Garage.name).all())
+    show_inactive = request.args.get("inactifs") == "1"
+    q = Garage.query if show_inactive else Garage.query.filter_by(active=True)
+    return render_template("vehicles/garages.html", garages=q.order_by(Garage.name).all(),
+                           show_inactive=show_inactive, inactive_count=Garage.query.filter_by(active=False).count())
+
+
+@bp.route("/garages/<int:gid>/actif", methods=["POST"])
+@login_required
+@editor_required
+def garage_toggle(gid):
+    """Désactiver : gestionnaire ou administrateur. Réactiver : administrateur seulement."""
+    g = db.session.get(Garage, gid) or abort(404)
+    if g.active:
+        g.active = False
+        audit("desactivation", "garage", g.id, g.name)
+        flash(f"« {g.name} » est désactivé. Il n'est plus proposé dans les bons de travail. "
+              "Seul un administrateur peut le réactiver.", "success")
+    else:
+        if not current_user.is_admin:
+            flash("Seul un administrateur peut réactiver un garage ou un atelier.", "danger")
+            return redirect(url_for("vehicles.garages", inactifs=1))
+        g.active = True
+        audit("reactivation", "garage", g.id, g.name)
+        flash(f"« {g.name} » est réactivé.", "success")
+    db.session.commit()
+    return redirect(request.referrer or url_for("vehicles.garages"))
 
 
 @bp.route("/garages/nouveau", methods=["GET", "POST"])
@@ -170,9 +195,12 @@ def garages():
 @login_required
 @editor_required
 def garage_edit(gid=None):
-    g = db.session.get(Garage, gid) if gid else Garage(kind="vehicule")
+    g = db.session.get(Garage, gid) if gid else Garage(kind="vehicule", active=True)
     if gid and g is None:
         abort(404)
+    if g.id and not g.active and not current_user.is_admin:
+        flash("Ce garage est désactivé. Seul un administrateur peut le modifier ou le réactiver.", "warning")
+        return redirect(url_for("vehicles.garages", inactifs=1))
     if request.method == "POST":
         values = {k: f_str(k) for k in ("name", "kind", "contact", "phone", "email", "address", "notes")}
         if not values["name"]:

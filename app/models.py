@@ -108,6 +108,8 @@ class Garage(TimestampMixin, db.Model):
     email = db.Column(db.String(200))
     address = db.Column(db.String(300))
     notes = db.Column(db.Text)
+    # Un gestionnaire peut désactiver ; seul un administrateur peut réactiver.
+    active = db.Column(db.Boolean, default=True, nullable=False, server_default="1")
 
 
 class Vehicle(TimestampMixin, db.Model):

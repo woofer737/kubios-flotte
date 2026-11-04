@@ -1,18 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Garages{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
   <h4 class="mb-0">Garages et ateliers de réparation</h4>
-  {% if current_user.can_edit %}<a href="{{ url_for('vehicles.garage_edit') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Ajouter</a>{% endif %}
+  <div class="d-flex gap-2 align-items-center">
+    {% if show_inactive %}
+      <a href="{{ url_for('vehicles.garages') }}" class="btn btn-outline-secondary btn-sm">Masquer les désactivés</a>
+    {% elif inactive_count %}
+      <a href="{{ url_for('vehicles.garages', inactifs=1) }}" class="btn btn-outline-secondary btn-sm">Voir les désactivés ({{ inactive_count }})</a>
+    {% endif %}
+    {% if current_user.can_edit %}<a href="{{ url_for('vehicles.garage_edit') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Ajouter</a>{% endif %}
+  </div>
 </div>
 <div class="card"><div class="table-responsive">
-<table class="table table-sm table-hover mb-0">
+<table class="table table-sm table-hover mb-0 align-middle">
   <thead><tr><th>Nom</th><th>Type</th><th>Contact</th><th>Téléphone</th><th>Courriel</th><th>Adresse</th><th></th></tr></thead>
   <tbody>
   {% for g in garages %}
-    <tr><td>{{ g.name }}</td><td>{{ {'vehicule':'Véhicules','outil':'Outils','les_deux':'Véhicules et outils'}.get(g.kind, g.kind) }}</td>
+    <tr class="{{ 'text-muted' if not g.active }}">
+      <td>{{ g.name }}{% if not g.active %} <span class="badge text-bg-secondary">Désactivé</span>{% endif %}</td>
+      <td>{{ {'vehicule':'Véhicules','outil':'Outils','les_deux':'Véhicules et outils'}.get(g.kind, g.kind) }}</td>
       <td>{{ g.contact or '' }}</td><td>{{ g.phone or '' }}</td><td>{{ g.email or '' }}</td><td>{{ g.address or '' }}</td>
-      <td>{% if current_user.can_edit %}<a href="{{ url_for('vehicles.garage_edit', gid=g.id) }}"><i class="bi bi-pencil"></i></a>{% endif %}</td></tr>
+      <td class="text-end text-nowrap">
+        {% if current_user.can_edit %}
+          {% if g.active %}
+            <a href="{{ url_for('vehicles.garage_edit', gid=g.id) }}" class="btn btn-sm btn-link" title="Modifier"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{{ url_for('vehicles.garage_toggle', gid=g.id) }}" class="d-inline"
+                  data-msg="Désactiver « {{ g.name }} » ? Il ne sera plus proposé dans les bons de travail. Seul un administrateur pourra le réactiver."
+                  onsubmit="return confirm(this.dataset.msg)">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger" title="Désactiver"><i class="bi bi-slash-circle"></i> Désactiver</button>
+            </form>
+          {% elif current_user.is_admin %}
+            <a href="{{ url_for('vehicles.garage_edit', gid=g.id) }}" class="btn btn-sm btn-link" title="Modifier"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{{ url_for('vehicles.garage_toggle', gid=g.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-counterclockwise"></i> Réactiver</button>
+            </form>
+          {% else %}
+            <span class="small" title="Seul un administrateur peut réactiver"><i class="bi bi-lock"></i> admin</span>
+          {% endif %}
+        {% endif %}
+      </td></tr>
   {% else %}<tr><td colspan="7" class="text-center text-muted py-3">Aucun garage. Ajoutez vos garages pour les rendez-vous.</td></tr>{% endfor %}
   </tbody>
 </table></div></div>

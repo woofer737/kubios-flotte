@@ -36,6 +36,22 @@ def _secret_key():
     return key
 
 
+# Colonnes ajoutées après la première version : (table, colonne, définition SQL).
+# db.create_all() ne modifie pas les tables existantes, on les ajoute ici.
+MIGRATIONS = [
+    ("garage", "active", "BOOLEAN NOT NULL DEFAULT 1"),
+]
+
+
+def _migrate():
+    from sqlalchemy import text
+    with db.engine.begin() as conn:
+        for table, col, ddl in MIGRATIONS:
+            cols = {r[1] for r in conn.execute(text(f"PRAGMA table_info({table})"))}
+            if cols and col not in cols:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}"))
+
+
 def create_app(start_scheduler=False):
     for sub in ("", "uploads", "backups"):
         os.makedirs(os.path.join(DATA_DIR, sub), exist_ok=True)
@@ -69,8 +85,9 @@ def create_app(start_scheduler=False):
     from .workorders import bp as wo_bp
     from .admin import bp as admin_bp
     from .public import bp as public_bp
+    from .reports import bp as reports_bp
 
-    for bp in (auth_bp, dash_bp, veh_bp, tools_bp, wo_bp, admin_bp, public_bp):
+    for bp in (auth_bp, dash_bp, veh_bp, tools_bp, wo_bp, admin_bp, public_bp, reports_bp):
         app.register_blueprint(bp)
 
     from .helpers import register_template_helpers
@@ -78,6 +95,7 @@ def create_app(start_scheduler=False):
 
     with app.app_context():
         db.create_all()
+        _migrate()
         models.seed_defaults()
 
     @app.before_request

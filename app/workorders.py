@@ -98,13 +98,20 @@ def new():
                            default_mgr=default_manager(kind))
 
 
+def _garages(wo=None):
+    """Garages actifs, plus celui déjà associé au bon même s'il a été désactivé."""
+    keep = {wo.garage_id} if wo and wo.garage_id else set()
+    keep |= {a.garage_id for a in wo.appointments if a.garage_id} if wo else set()
+    return Garage.query.filter(db.or_(Garage.active.is_(True), Garage.id.in_(keep))).order_by(Garage.name).all()
+
+
 @bp.route("/bons/<int:wid>")
 @login_required
 def show(wid):
     wo = db.session.get(WorkOrder, wid) or abort(404)
     tools = Tool.query.filter(Tool.status != "retire").order_by(Tool.name).all()
     return render_template("workorders/show.html", wo=wo, statuses=WO_STATUSES, priorities=WO_PRIORITIES,
-                           managers=_managers(), garages=Garage.query.order_by(Garage.name).all(),
+                           managers=_managers(), garages=_garages(wo),
                            drivers=Driver.query.filter_by(active=True).order_by(Driver.name).all(),
                            vehicles=_sorted_vehicles(), tools=tools)
 

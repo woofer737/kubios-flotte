@@ -8,6 +8,8 @@ Logiciel web interne qui permet de :
 - **Dispatch** : vue des rendez-vous à venir et tableau des bons par étape.
 - **Outils** : inventaire par camion ou entrepôt, déplacements, vérification d'inventaire d'un camion, et bons de réparation d'outils avec les mêmes rappels.
 - **Sécurité** : connexion par courriel et mot de passe, verrouillage après 5 essais, 3 rôles (Administrateur, Gestionnaire, Lecture seule) et **journal d'audit** de toutes les actions.
+- **Rapports** : listing de la flotte, coûts de réparation par camion, détail des réparations, inventaire des outils par camion. Vous pouvez les télécharger en PDF ou en Excel, ou les envoyer par courriel.
+- **Garages / ateliers** : un gestionnaire peut désactiver un garage, mais seul un administrateur peut le réactiver.
 - **Mises à jour** via les *Releases* GitHub, depuis l'écran Administration > Mises à jour.
 - **Sauvegardes complètes** automatiques chaque nuit (30 conservées) et **restauration** en quelques clics.
 

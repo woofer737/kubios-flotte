@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Rapports{% endblock %}
+{% block content %}
+<h4 class="mb-1">Rapports</h4>
+<p class="text-muted small mb-3">Consultez à l'écran, téléchargez en PDF ou Excel, ou envoyez par courriel.</p>
+<div class="row g-3" style="max-width:1100px">
+  {% for key, (title, icon, desc, _) in reports.items() %}
+  <div class="col-md-6">
+    <a href="{{ url_for('reports.view', key=key) }}" class="card card-body h-100 text-decoration-none text-body report-card">
+      <div class="d-flex gap-3 align-items-start">
+        <i class="bi {{ icon }} fs-2 text-primary"></i>
+        <div><div class="fw-semibold">{{ title }}</div><div class="small text-muted">{{ desc }}</div></div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+<style>.report-card:hover{border-color:var(--bs-primary);box-shadow:0 2px 8px rgba(0,0,0,.06)}</style>
+{% endblock %}
