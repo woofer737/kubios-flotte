@@ -16,7 +16,11 @@
     {% if status.latest %}<div><span class="text-muted">Dernière version publiée</span><br><b class="fs-5">{{ status.latest }}</b></div>{% endif %}
     <div><span class="text-muted">Dernière vérification</span><br><b>{{ status.last_check|datetime if status.last_check else 'jamais' }}</b></div>
     <div><span class="text-muted">Vérification automatique</span><br><b>{{ 'aux ' ~ every ~ ' h' if every and every != '0' else 'désactivée' }}</b></div>
+    <div><span class="text-muted">Installation automatique</span><br><b>{{ {'nuit': 'la nuit à ' ~ install_hour ~ ' h', 'immediat': 'dès que disponible', 'non': 'non (manuelle)'}.get(auto_mode, auto_mode) }}</b>
+      <a href="{{ url_for('admin.settings') }}" class="small">modifier</a></div>
   </div>
+  {% if skip_version %}<div class="alert alert-warning small">La version <b>{{ skip_version }}</b> a été annulée automatiquement parce qu'elle ne démarrait pas. Elle ne sera pas réinstallée automatiquement : publiez une version corrigée, ou installez-la manuellement ci-dessous.</div>{% endif %}
+  {% if info and info.available and auto_mode == 'nuit' and not log and info.latest != skip_version %}<div class="alert alert-info small"><i class="bi bi-moon-stars"></i> Cette version sera installée automatiquement cette nuit à {{ install_hour }} h. Vous pouvez aussi l'installer maintenant.</div>{% endif %}
   {% if not repo %}
     <div class="alert alert-info mb-0">Configurez le dépôt GitHub dans <a href="{{ url_for('admin.settings') }}">Paramètres</a> pour activer les mises à jour.</div>
   {% endif %}

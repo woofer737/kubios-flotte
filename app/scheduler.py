@@ -70,10 +70,23 @@ def start(app):
             update_hours = int(get_setting("update_check_hours") or 6)
         except ValueError:
             update_hours = 6
+    from . import updater
+
+    def check_job():
+        info = updater.check_and_store()
+        if info and info["available"] and get_setting("update_auto_mode") == "immediat":
+            return updater.auto_install(app, info, reason="automatique (dès disponible)")
+        return None
+
     if update_hours > 0:
-        from .updater import check_and_store
-        _scheduler.add_job(_job(app, "vérification des mises à jour", check_and_store), "interval",
+        _scheduler.add_job(_job(app, "vérification des mises à jour", check_job), "interval",
                            hours=update_hours, id="update_check",
                            next_run_time=datetime.now() + timedelta(minutes=2))
+    # Mode « nuit » : on regarde chaque heure (à hh:05) si c'est l'heure d'installation
+    _scheduler.add_job(_job(app, "installation de nuit", lambda: updater.nightly_job(app)), "cron",
+                       minute=5, id="update_nightly")
+    # Résultat d'une mise à jour (réussite / retour arrière) laissé par run.py
+    _scheduler.add_job(_job(app, "résultat de mise à jour", updater.report_result), "interval",
+                       minutes=1, id="update_report", next_run_time=datetime.now() + timedelta(seconds=30))
     _scheduler.start()
     log.info("Planificateur démarré (boîte courriel aux %s min)", poll)

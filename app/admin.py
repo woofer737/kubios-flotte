@@ -285,6 +285,8 @@ def updates():
                 flash("Vérification faite : le logiciel est à jour.", "info")
             return redirect(url_for("admin.updates"))
     if action == "install" and info and info["available"]:
+        from .models import set_setting
+        set_setting("update_skip_version", "")  # installation volontaire : on lève le blocage éventuel
         try:
             log = updater.apply(info["zip_url"], backup_db)
             audit("mise_a_jour_logiciel", "systeme", None, f"{info['current']} → {info['latest']}")
@@ -298,4 +300,6 @@ def updates():
     if not error and status["error"]:
         error = status["error"]
     return render_template("admin/updates.html", info=info, error=error, log=log, repo=get_setting("github_repo"),
-                           status=status, every=get_setting("update_check_hours"))
+                           status=status, every=get_setting("update_check_hours"),
+                           auto_mode=get_setting("update_auto_mode"), install_hour=get_setting("update_install_hour"),
+                           skip_version=get_setting("update_skip_version", "") or "")

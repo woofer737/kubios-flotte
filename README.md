@@ -103,7 +103,14 @@ Autre fournisseur (Gmail, Videotron…) : choisir **SMTP / IMAP** et entrer serv
 **Publier une mise à jour** :
 1. Modifier le code et augmenter le numéro dans le fichier **`VERSION`** (ex. `1.1.0`).
 2. Pousser sur GitHub, puis créer une **Release** avec le tag `v1.1.0` et des notes de version.
-3. Kubios vérifie GitHub **automatiquement toutes les 6 heures** (réglable dans Paramètres, 0 = jamais). Quand une version est disponible, un badge jaune apparaît sur le menu **Administration**. Pour vérifier tout de suite, ouvrir **Administration > Mises à jour** et cliquer **Vérifier maintenant**, puis **Installer**.
+3. C'est tout : **Kubios s'installe la mise à jour lui-même.**
+   - Il vérifie GitHub toutes les 6 heures (réglable, 0 = jamais) et l'installe **la nuit à 3 h** (après la sauvegarde de 2 h).
+   - Autres modes dans Paramètres : *dès qu'une version est détectée*, ou *non* (avertir seulement, avec un badge jaune sur le menu Administration).
+   - Pour aller plus vite : **Administration > Mises à jour > Vérifier maintenant**, puis **Installer**.
+
+**Filet de sécurité** : avant chaque installation, Kubios fait une sauvegarde complète et une copie du programme (`data\backups\code-*.zip`, 5 conservées). Si la nouvelle version **ne démarre pas** (2 essais), il **revient tout seul à l'ancienne**. Il note cette version comme « à ne pas réinstaller automatiquement » et envoie un courriel aux administrateurs. Si elle démarre et fonctionne pendant 60 secondes, la mise à jour est confirmée et les administrateurs reçoivent un courriel « Mise à jour installée ».
+
+> Le filet de sécurité est actif à partir de la version 1.3.0 : la mise à jour *vers* la 1.3.0 se fait encore sans filet.
    - Sauvegarde automatique de la base, remplacement des fichiers (jamais `data/`), installation des dépendances, puis redémarrage (environ 15 s).
 
 ## 6. Commandes utiles

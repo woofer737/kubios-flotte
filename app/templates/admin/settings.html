@@ -78,7 +78,15 @@
   <div class="card mb-3"><div class="card-header">Mises à jour GitHub</div><div class="card-body row g-2">
     {{ inp('github_repo', 'Dépôt GitHub', help='format : proprietaire/depot') }}
     {{ inp('github_token', 'Jeton d\'accès (si dépôt privé)', help='Jeton « fine-grained » en lecture seule sur Contents') }}
-    {{ inp('update_check_hours', 'Vérifier automatiquement aux (heures)', 'number', 'col-md-4', '0 = jamais (vérification manuelle seulement). Redémarrage requis après changement.') }}
+    {{ inp('update_check_hours', 'Vérifier automatiquement aux (heures)', 'number', 'col-md-4', '0 = jamais. Redémarrage requis après changement.') }}
+    <div class="col-md-4"><label class="form-label small mb-0">Installation automatique</label>
+      <select name="update_auto_mode" class="form-select form-select-sm">
+        <option value="nuit" {{ 'selected' if s.update_auto_mode == 'nuit' }}>La nuit, à l'heure choisie (recommandé)</option>
+        <option value="immediat" {{ 'selected' if s.update_auto_mode == 'immediat' }}>Dès qu'une version est détectée</option>
+        <option value="non" {{ 'selected' if s.update_auto_mode == 'non' }}>Non : avertir seulement, installation manuelle</option>
+      </select></div>
+    {{ inp('update_install_hour', 'Heure d\'installation de nuit (0-23)', 'number', 'col-md-4', 'Défaut 3 h, après la sauvegarde de 2 h.') }}
+    <div class="col-12 small text-muted">Avant chaque installation : sauvegarde complète et copie du programme. Si la nouvelle version ne démarre pas, Kubios revient tout seul à l'ancienne et vous avise par courriel.</div>
   </div></div>
 
   <div class="card mb-3"><div class="card-header">Formulaire public (optionnel)</div><div class="card-body">

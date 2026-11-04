@@ -426,6 +426,9 @@ DEFAULT_SETTINGS = {
     "github_repo": "",
     "github_token": "",
     "update_check_hours": "6",
+    # Installation automatique : "non", "nuit" (à l'heure choisie) ou "immediat" (dès la vérification)
+    "update_auto_mode": "nuit",
+    "update_install_hour": "3",
     # Formulaire public
     "public_form_enabled": "0",
     # Avertissement affiché sur la page de connexion (1re ligne = titre, paragraphes séparés par une ligne vide)
