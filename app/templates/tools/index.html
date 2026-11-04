@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Outils{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Inventaire des outils</h4>
+  {% if current_user.can_edit %}<a href="{{ url_for('tools.edit') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Ajouter un outil</a>{% endif %}
+</div>
+<form class="card card-body mb-3 py-2">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label small mb-0">Recherche</label><input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Nom, no inventaire, série, marque…"></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Emplacement</label>
+      <select name="lieu" class="form-select form-select-sm"><option value="">Tous</option>
+        <option value="entrepot" {{ 'selected' if loc == 'entrepot' }}>Entrepôt / autre</option>
+        {% for v in vehicles %}<option value="{{ v.id }}" {{ 'selected' if loc == v.id|string }}>Camion #{{ v.unit_number }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Catégorie</label>
+      <select name="cat" class="form-select form-select-sm"><option value="">Toutes</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if cat == c.id|string }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Statut</label>
+      <select name="statut" class="form-select form-select-sm"><option value="">Tous (sauf retirés)</option>
+        {% for k, l in statuses %}<option value="{{ k }}" {{ 'selected' if status == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-md-1"><button class="btn btn-sm btn-secondary w-100">Filtrer</button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive">
+<table class="table table-sm table-hover mb-0">
+  <thead><tr><th>No inv.</th><th>Outil</th><th>Catégorie</th><th>Marque / modèle</th><th>No série</th><th>Emplacement</th><th>Statut</th></tr></thead>
+  <tbody>
+  {% for t in tools %}
+    <tr>
+      <td>{{ t.asset_tag or '' }}</td>
+      <td><a href="{{ url_for('tools.show', tid=t.id) }}"><b>{{ t.name }}</b></a> {% if t.quantity > 1 %}×{{ t.quantity }}{% endif %}</td>
+      <td>{{ t.category.name if t.category else '' }}</td>
+      <td>{{ t.brand or '' }} {{ t.model or '' }}</td>
+      <td>{{ t.serial or '' }}</td>
+      <td>{% if t.vehicle %}<a href="{{ url_for('vehicles.show', vid=t.vehicle.id) }}">{{ t.location_label }}</a>{% else %}{{ t.location_label }}{% endif %}</td>
+      <td><span class="badge {{ {'en_service':'text-bg-success','en_reparation':'text-bg-warning','perdu':'text-bg-danger'}.get(t.status, 'text-bg-secondary') }}">{{ t.status_label }}</span></td>
+    </tr>
+  {% else %}<tr><td colspan="7" class="text-center text-muted py-4">Aucun outil.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+<p class="small text-muted mt-2">{{ tools|length }} outil(s)</p>
+{% endblock %}

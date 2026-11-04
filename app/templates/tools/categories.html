@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Catégories d'outils{% endblock %}
+{% block content %}
+<h4 class="mb-3">Catégories d'outils</h4>
+<div class="card card-body" style="max-width:600px">
+  <ul class="list-group mb-3">{% for c in categories %}<li class="list-group-item">{{ c.name }}</li>{% endfor %}</ul>
+  {% if current_user.can_edit %}
+  <form method="post" class="d-flex gap-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input name="name" class="form-control" placeholder="Nouvelle catégorie" required>
+    <button class="btn btn-primary">Ajouter</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Véhicules{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Flotte de véhicules</h4>
+  {% if current_user.can_edit %}<a href="{{ url_for('vehicles.edit') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Ajouter un véhicule</a>{% endif %}
+</div>
+<form class="card card-body mb-3 py-2">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4"><label class="form-label small mb-0">Recherche</label><input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Unité, plaque, NIV, marque, chauffeur…"></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Statut</label>
+      <select name="statut" class="form-select form-select-sm"><option value="">Tous</option>
+        {% for s in statuses %}<option {{ 'selected' if s == status }}>{{ s }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Département</label>
+      <select name="dept" class="form-select form-select-sm"><option value="">Tous</option>
+        {% for d in depts %}<option {{ 'selected' if d == dept }}>{{ d }}</option>{% endfor %}</select></div>
+    <div class="col-md-1"><button class="btn btn-sm btn-secondary w-100">Filtrer</button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive">
+<table class="table table-sm table-hover mb-0">
+  <thead><tr><th>Unité</th><th>Année</th><th>Marque / modèle</th><th>Plaque</th><th>Département</th><th>Chauffeur</th><th>Immat. SAAQ</th><th>Fin bail</th><th>Statut</th><th>Bons</th></tr></thead>
+  <tbody>
+  {% for v in vehicles %}
+    <tr>
+      <td><a href="{{ url_for('vehicles.show', vid=v.id) }}"><b>#{{ v.unit_number }}</b></a></td>
+      <td>{{ v.year or '' }}</td>
+      <td>{{ v.make or '' }} {{ v.model or '' }}</td>
+      <td>{{ v.plate or '' }}</td>
+      <td>{{ v.department or '' }}</td>
+      <td>{{ v.driver.name if v.driver else '' }}</td>
+      <td>{% if v.registration_expiry and v.registration_expiry.year < 9999 %}<span class="{{ 'overdue' if (v.registration_expiry|days_until) < 30 }}">{{ v.registration_expiry|date }}</span>{% endif %}</td>
+      <td>{{ v.lease_end|date if v.lease_end else '' }}</td>
+      <td><span class="badge {{ 'text-bg-success' if v.status == 'Actif' else 'text-bg-secondary' }}">{{ v.status }}</span></td>
+      <td>{% if open_by_vehicle.get(v.id) %}<a href="{{ url_for('vehicles.show', vid=v.id) }}" class="badge text-bg-warning text-decoration-none">{{ open_by_vehicle[v.id] }} ouvert(s)</a>{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="10" class="text-center text-muted py-4">Aucun véhicule. {% if current_user.is_admin %}<a href="{{ url_for('admin.import_excel') }}">Importer votre fichier Excel</a>{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+<p class="small text-muted mt-2">{{ vehicles|length }} véhicule(s)</p>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% macro status_badge(wo) -%}
+<span class="badge badge-st-{{ wo.status }}">{{ wo.status_label }}</span>
+{%- endmacro %}
+
+{% macro due(wo) -%}
+{% if wo.due_date %}
+  {% set d = wo.due_date|days_until %}
+  <span class="{{ 'overdue' if wo.is_overdue }}">{{ wo.due_date|date }}</span>
+  {% if not wo.is_closed %}<small class="text-muted">({{ 'retard ' ~ (-d) ~ ' j' if d < 0 else ('aujourd\'hui' if d == 0 else 'dans ' ~ d ~ ' j') }})</small>{% endif %}
+{% else %}<span class="text-muted">—</span>{% endif %}
+{%- endmacro %}
+
+{% macro wo_table(wos, show_subject=True) %}
+<div class="table-responsive">
+<table class="table table-sm table-hover mb-0">
+  <thead><tr><th>BT</th>{% if show_subject %}<th>Concerne</th>{% endif %}<th>Problème</th><th>Statut</th><th>Responsable</th><th>Prévu</th></tr></thead>
+  <tbody>
+  {% for w in wos %}
+    <tr>
+      <td class="text-nowrap"><a href="{{ url_for('workorders.show', wid=w.id) }}">{{ w.number }}</a></td>
+      {% if show_subject %}<td>{% if w.kind == 'outil' %}<i class="bi bi-tools text-muted"></i>{% else %}<i class="bi bi-truck text-muted"></i>{% endif %} {{ w.subject_label }}</td>{% endif %}
+      <td><span class="prio-{{ w.priority }}">{% if w.priority in ('urgente','haute') %}<i class="bi bi-exclamation-triangle-fill"></i> {% endif %}</span>{{ w.title }}</td>
+      <td>{{ status_badge(w) }}</td>
+      <td>{{ w.assigned_to.name if w.assigned_to else '—' }}</td>
+      <td>{{ due(w) }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="text-muted text-center py-3">Aucun bon de travail.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endmacro %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Nouveau bon de travail{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ 'Nouveau bris de véhicule' if kind == 'vehicule' else 'Nouvelle réparation d\'outil' }}</h4>
+<form method="post" enctype="multipart/form-data" class="card card-body" style="max-width:900px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="type" value="{{ kind }}">
+  <div class="row g-3">
+    {% if kind == 'vehicule' %}
+    <div class="col-md-6"><label class="form-label">Véhicule</label>
+      <select name="vehicle_id" class="form-select" id="veh" required>
+        <option value="">— Choisir l'unité —</option>
+        {% for v in vehicles %}<option value="{{ v.id }}" data-driver="{{ v.driver.name if v.driver else '' }}" data-email="{{ v.driver.email if v.driver and v.driver.email else '' }}" {{ 'selected' if pre_vehicle == v.id }}>{{ v.label }} — {{ v.plate or '' }}{% if v.driver %} — {{ v.driver.name }}{% endif %}</option>{% endfor %}
+      </select></div>
+    {% else %}
+    <div class="col-md-6"><label class="form-label">Outil</label>
+      <select name="tool_id" class="form-select" required>
+        <option value="">— Choisir l'outil —</option>
+        {% for t in tools %}<option value="{{ t.id }}" {{ 'selected' if pre_tool == t.id }}>{{ t.asset_tag or '' }} {{ t.name }} ({{ t.location_label }})</option>{% endfor %}
+      </select>
+      <div class="form-text">Outil absent ? <a href="{{ url_for('tools.edit') }}">Ajoutez-le à l'inventaire</a>.</div></div>
+    {% endif %}
+    <div class="col-md-3"><label class="form-label">Source</label>
+      <select name="source" class="form-select">{% for k, l in sources %}<option value="{{ k }}" {{ 'selected' if k == 'telephone' }}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label">Priorité</label>
+      <select name="priority" class="form-select">{% for k, l in priorities %}<option value="{{ k }}" {{ 'selected' if k == 'normale' }}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-12"><label class="form-label">Problème (titre court)</label>
+      <input name="title" class="form-control" required maxlength="250" placeholder="ex. Bruit de freins à l'avant, voyant moteur allumé…"></div>
+    <div class="col-12"><label class="form-label">Description détaillée</label>
+      <textarea name="description" rows="4" class="form-control"></textarea></div>
+    <div class="col-md-4"><label class="form-label">Signalé par</label><input name="reporter_name" id="rname" class="form-control" value="{{ pre_driver.name if pre_driver else '' }}"></div>
+    <div class="col-md-4"><label class="form-label">Courriel</label><input type="email" name="reporter_email" id="remail" class="form-control" value="{{ pre_driver.email if pre_driver and pre_driver.email else '' }}"></div>
+    <div class="col-md-4"><label class="form-label">Téléphone</label><input name="reporter_phone" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Responsable (recevra le bon par courriel)</label>
+      <select name="assigned_to_id" class="form-select">
+        <option value="">— Non assigné —</option>
+        {% for m in managers %}<option value="{{ m.id }}" {{ 'selected' if default_mgr and default_mgr.id == m.id }}>{{ m.name }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-3"><label class="form-label">Date prévue de résolution</label><input type="date" name="due_date" class="form-control">
+      <div class="form-text">Vide = délai par défaut.</div></div>
+    <div class="col-md-3"><label class="form-label">Photos / fichiers</label><input type="file" name="files" multiple class="form-control"></div>
+  </div>
+  <div class="mt-4"><button class="btn btn-primary"><i class="bi bi-send"></i> Créer et aviser le responsable</button>
+    <a href="{{ url_for('workorders.index') }}" class="btn btn-link">Annuler</a></div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const veh = document.getElementById('veh');
+if (veh) veh.addEventListener('change', () => {
+  const o = veh.selectedOptions[0];
+  const n = document.getElementById('rname'), e = document.getElementById('remail');
+  if (o && !n.value) n.value = o.dataset.driver || '';
+  if (o && !e.value) e.value = o.dataset.email || '';
+});
+</script>
+{% endblock %}

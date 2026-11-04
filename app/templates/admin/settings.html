@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Paramètres{% endblock %}
+{% macro inp(key, label, type='text', col='col-md-6', help=None) %}
+<div class="{{ col }}"><label class="form-label small mb-0">{{ label }}</label>
+  {% if key in secrets %}
+  <input type="password" name="{{ key }}" class="form-control form-control-sm" placeholder="{{ '•••••••• (enregistré — laisser vide pour conserver)' if s[key] else '' }}" autocomplete="new-password">
+  {% else %}
+  <input type="{{ type }}" name="{{ key }}" value="{{ s[key] or '' }}" class="form-control form-control-sm">
+  {% endif %}
+  {% if help %}<div class="form-text">{{ help }}</div>{% endif %}</div>
+{% endmacro %}
+{% macro chk(key, label) %}
+<div class="form-check"><input class="form-check-input" type="checkbox" name="{{ key }}" id="{{ key }}" value="1" {{ 'checked' if s[key] == '1' }}><label class="form-check-label" for="{{ key }}">{{ label }}</label></div>
+{% endmacro %}
+{% block content %}
+<h4 class="mb-3">Paramètres</h4>
+<form method="post" style="max-width:1000px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="card mb-3"><div class="card-header">Général</div><div class="card-body row g-2">
+    {{ inp('company_name', 'Nom de l\'entreprise (préfixe des courriels)') }}
+    {{ inp('base_url', 'Adresse du logiciel (liens dans les courriels)', help='ex. http://serveur-kubios:8080') }}
+  </div></div>
+
+  <div class="card mb-3"><div class="card-header">Responsables et rappels</div><div class="card-body row g-2">
+    <div class="col-md-6"><label class="form-label small mb-0">Responsable par défaut — véhicules</label>
+      <select name="default_fleet_manager_id" class="form-select form-select-sm"><option value="">(premier administrateur)</option>
+        {% for m in managers %}<option value="{{ m.id }}" {{ 'selected' if s.default_fleet_manager_id == m.id|string }}>{{ m.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Responsable par défaut — outils</label>
+      <select name="default_tools_manager_id" class="form-select form-select-sm"><option value="">(premier administrateur)</option>
+        {% for m in managers %}<option value="{{ m.id }}" {{ 'selected' if s.default_tools_manager_id == m.id|string }}>{{ m.name }}</option>{% endfor %}</select></div>
+    {{ inp('default_due_days', 'Délai par défaut de résolution (jours)', 'number', 'col-md-4') }}
+    {{ inp('stale_days', 'Rappel si aucune mise à jour depuis (jours)', 'number', 'col-md-4') }}
+    {{ inp('overdue_repeat_days', 'Répéter l\'avis de retard aux (jours)', 'number', 'col-md-4') }}
+    {{ inp('escalation_email', 'Courriel d\'escalade (copie des retards)', 'email', 'col-md-4', 'ex. directeur') }}
+    {{ inp('escalate_after_notices', 'Escalader après N avis de retard', 'number', 'col-md-4') }}
+    {{ inp('expiry_warning_days', 'Avertir des échéances flotte (jours avant)', 'number', 'col-md-4') }}
+    {{ inp('digest_hour', 'Heure du résumé quotidien (lun-ven)', 'number', 'col-md-4') }}
+  </div></div>
+
+  <div class="card mb-3"><div class="card-header">Courriel</div><div class="card-body row g-2">
+    <div class="col-md-6"><label class="form-label small mb-0">Système de courriel</label>
+      <select name="mail_backend" id="mb" class="form-select form-select-sm">
+        <option value="aucun" {{ 'selected' if s.mail_backend == 'aucun' }}>Aucun (désactivé)</option>
+        <option value="graph" {{ 'selected' if s.mail_backend == 'graph' }}>Microsoft 365 (recommandé)</option>
+        <option value="smtp_imap" {{ 'selected' if s.mail_backend == 'smtp_imap' }}>SMTP / IMAP</option>
+      </select></div>
+    {{ inp('mail_from', 'Adresse d\'expédition', 'email', help='ex. flotte@lysair.ca') }}
+    <div class="col-12 bk bk-graph row g-2 m-0 p-0">
+      <div class="col-12 small text-muted">Voir le guide « Connexion Microsoft 365 » dans le fichier README.md.</div>
+      {{ inp('graph_tenant_id', 'ID du locataire (Tenant ID)') }}
+      {{ inp('graph_client_id', 'ID de l\'application (Client ID)') }}
+      {{ inp('graph_client_secret', 'Secret client') }}
+      {{ inp('graph_mailbox', 'Boîte aux lettres utilisée', 'email', help='La boîte qui reçoit les bris et envoie les avis') }}
+    </div>
+    <div class="col-12 bk bk-smtp_imap row g-2 m-0 p-0">
+      {{ inp('smtp_host', 'Serveur SMTP', col='col-md-4') }}{{ inp('smtp_port', 'Port', 'number', 'col-md-2') }}
+      {{ inp('smtp_user', 'Utilisateur SMTP', col='col-md-3') }}{{ inp('smtp_password', 'Mot de passe SMTP', col='col-md-3') }}
+      <div class="col-12">{{ chk('smtp_tls', 'STARTTLS') }}</div>
+      {{ inp('imap_host', 'Serveur IMAP', col='col-md-4') }}{{ inp('imap_port', 'Port', 'number', 'col-md-2') }}
+      {{ inp('imap_user', 'Utilisateur IMAP', col='col-md-3') }}{{ inp('imap_password', 'Mot de passe IMAP', col='col-md-3') }}
+      {{ inp('imap_folder', 'Dossier', col='col-md-4') }}
+    </div>
+    <div class="col-12 mt-2">
+      {{ chk('inbox_enabled', 'Lire automatiquement la boîte et ouvrir un bon de travail pour chaque courriel non lu') }}
+      {{ chk('inbox_ack_sender', 'Envoyer un accusé de réception à l\'expéditeur') }}
+    </div>
+    {{ inp('inbox_poll_minutes', 'Fréquence de lecture (minutes)', 'number', 'col-md-3') }}
+    <div class="col-12 small text-muted">Astuce : demandez aux chauffeurs d'écrire le numéro d'unité dans l'objet (ex. « Unité 105 — pneu crevé »). Le logiciel reconnaît aussi la plaque, ou le camion attitré à l'expéditeur. Un objet contenant « outil » ouvre une réparation d'outil.</div>
+    <div class="col-12 d-flex gap-2 mt-2">
+      <button name="action" value="test" class="btn btn-sm btn-outline-primary">Enregistrer et tester (courriel de test à moi)</button>
+      <button name="action" value="inbox" class="btn btn-sm btn-outline-secondary">Enregistrer et lire la boîte maintenant</button>
+    </div>
+  </div></div>
+
+  <div class="card mb-3"><div class="card-header">Mises à jour GitHub</div><div class="card-body row g-2">
+    {{ inp('github_repo', 'Dépôt GitHub', help='format : proprietaire/depot') }}
+    {{ inp('github_token', 'Jeton d\'accès (si dépôt privé)', help='Jeton « fine-grained » en lecture seule sur Contents') }}
+  </div></div>
+
+  <div class="card mb-3"><div class="card-header">Formulaire public (optionnel)</div><div class="card-body">
+    {{ chk('public_form_enabled', 'Activer la page /signaler (signalement sans mot de passe)') }}
+    <div class="small text-muted">Désactivé par défaut. Les chauffeurs signalent par téléphone ou par courriel.</div>
+  </div></div>
+
+  <button class="btn btn-primary">Enregistrer</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+const mb = document.getElementById('mb');
+function sync() { document.querySelectorAll('.bk').forEach(e => e.classList.toggle('d-none', !e.classList.contains('bk-' + mb.value))); }
+mb.addEventListener('change', sync); sync();
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Chauffeur{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ d.name if d.id else 'Nouveau chauffeur' }}</h4>
+<form method="post" class="card card-body" style="max-width:700px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-2">
+    <div class="col-md-6"><label class="form-label small mb-0">Nom *</label><input name="name" value="{{ d.name or '' }}" class="form-control" required></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Courriel</label><input type="email" name="email" value="{{ d.email or '' }}" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Téléphone (cellulaire)</label><input name="phone" value="{{ d.phone or '' }}" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Département</label><input name="department" value="{{ d.department or '' }}" class="form-control"></div>
+    <div class="col-12"><label class="form-label small mb-0">Notes</label><textarea name="notes" class="form-control">{{ d.notes or '' }}</textarea></div>
+    <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="active" id="act" value="1" {{ 'checked' if d.active }}><label for="act" class="form-check-label">Actif</label></div>
+  </div>
+  <div class="mt-3"><button class="btn btn-primary">Enregistrer</button> <a href="{{ url_for('vehicles.drivers') }}" class="btn btn-link">Annuler</a></div>
+</form>
+{% endblock %}

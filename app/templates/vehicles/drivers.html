@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Chauffeurs{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Chauffeurs</h4>
+  <div>
+    <a href="{{ url_for('vehicles.drivers', tous='0' if show_all else '1') }}" class="btn btn-sm btn-link">{{ 'Actifs seulement' if show_all else 'Afficher les inactifs' }}</a>
+    {% if current_user.can_edit %}<a href="{{ url_for('vehicles.driver_edit') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Ajouter</a>{% endif %}
+  </div>
+</div>
+<div class="alert alert-info py-2 small">Les chauffeurs n'ont pas d'accès au logiciel. Leur courriel sert à recevoir les convocations de rendez-vous garage, et à reconnaître leur camion quand ils signalent un bris par courriel.</div>
+<div class="card"><div class="table-responsive">
+<table class="table table-sm table-hover mb-0">
+  <thead><tr><th>Nom</th><th>Courriel</th><th>Téléphone</th><th>Département</th><th>Véhicule(s)</th><th></th></tr></thead>
+  <tbody>
+  {% for d in drivers %}
+    <tr class="{{ 'text-muted' if not d.active }}">
+      <td>{{ d.name }}</td><td>{{ d.email or '' }}{% if not d.email %}<span class="badge text-bg-warning">aucun courriel</span>{% endif %}</td>
+      <td>{{ d.phone or '' }}</td><td>{{ d.department or '' }}</td>
+      <td>{% for v in d.vehicles %}<a href="{{ url_for('vehicles.show', vid=v.id) }}">#{{ v.unit_number }}</a> {% endfor %}</td>
+      <td>{% if current_user.can_edit %}<a href="{{ url_for('vehicles.driver_edit', did=d.id) }}"><i class="bi bi-pencil"></i></a>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

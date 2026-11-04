@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import wo_table with context %}
+{% block title %}Bons de travail{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Bons de travail {% if kind == 'outil' %}— outils{% elif kind == 'vehicule' %}— véhicules{% endif %}</h4>
+  {% if current_user.can_edit %}
+  <div class="btn-group">
+    <a href="{{ url_for('workorders.new', type='vehicule') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Bris véhicule</a>
+    <a href="{{ url_for('workorders.new', type='outil') }}" class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i> Réparation outil</a>
+  </div>
+  {% endif %}
+</div>
+<form class="card card-body mb-3 py-2">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label small mb-0">Recherche</label><input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="BT, unité, plaque, outil…"></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Type</label>
+      <select name="type" class="form-select form-select-sm"><option value="">Tous</option>
+        <option value="vehicule" {{ 'selected' if kind=='vehicule' }}>Véhicules</option><option value="outil" {{ 'selected' if kind=='outil' }}>Outils</option></select></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Statut</label>
+      <select name="statut" class="form-select form-select-sm">
+        <option value="ouverts" {{ 'selected' if status=='ouverts' }}>Tous les ouverts</option>
+        <option value="retard" {{ 'selected' if status=='retard' }}>En retard</option>
+        <option value="tous" {{ 'selected' if status=='tous' }}>Tous (incl. fermés)</option>
+        {% for k, l in statuses %}<option value="{{ k }}" {{ 'selected' if status==k }}>{{ l }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-2"><label class="form-label small mb-0">Responsable</label>
+      <select name="responsable" class="form-select form-select-sm"><option value="">Tous</option>
+        <option value="moi" {{ 'selected' if assigned=='moi' }}>Moi</option>
+        {% for m in managers %}<option value="{{ m.id }}" {{ 'selected' if assigned==m.id|string }}>{{ m.name }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-1"><button class="btn btn-sm btn-secondary w-100">Filtrer</button></div>
+  </div>
+</form>
+<div class="card"><div class="card-body p-0">{{ wo_table(wos) }}</div></div>
+<p class="small text-muted mt-2">{{ wos|length }} résultat(s)</p>
+{% endblock %}

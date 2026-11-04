@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Outil{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ t.name if t.id else 'Nouvel outil' }}</h4>
+<form method="post" class="card card-body" style="max-width:900px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-2">
+    <div class="col-md-3"><label class="form-label small mb-0">No inventaire / étiquette</label><input name="asset_tag" value="{{ t.asset_tag or '' }}" class="form-control form-control-sm"></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Nom de l'outil *</label><input name="name" value="{{ t.name or '' }}" class="form-control form-control-sm" required></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Catégorie</label>
+      <select name="category_id" class="form-select form-select-sm"><option value="">—</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if t.category_id == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Marque</label><input name="brand" value="{{ t.brand or '' }}" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Modèle</label><input name="model" value="{{ t.model or '' }}" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small mb-0">No série</label><input name="serial" value="{{ t.serial or '' }}" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Quantité</label><input type="number" min="1" name="quantity" value="{{ t.quantity or 1 }}" class="form-control form-control-sm"></div>
+    <div class="col-md-4"><label class="form-label small mb-0">Emplacement</label>
+      <select name="vehicle_id" class="form-select form-select-sm"><option value="">Entrepôt / autre</option>
+        {% for v in vehicles %}<option value="{{ v.id }}" {{ 'selected' if t.vehicle_id == v.id }}>Camion #{{ v.unit_number }}{% if v.driver %} — {{ v.driver.name }}{% endif %}</option>{% endfor %}</select></div>
+    <div class="col-md-4"><label class="form-label small mb-0">Précision emplacement</label><input name="location_note" value="{{ t.location_note or '' }}" class="form-control form-control-sm" placeholder="ex. Entrepôt, étagère B"></div>
+    <div class="col-md-4"><label class="form-label small mb-0">Statut</label>
+      <select name="status" class="form-select form-select-sm">{% for k, l in statuses %}<option value="{{ k }}" {{ 'selected' if t.status == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Date d'achat</label><input type="date" name="purchase_date" value="{{ t.purchase_date.isoformat() if t.purchase_date else '' }}" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Valeur ($)</label><input name="value" value="{{ t.value if t.value is not none else '' }}" class="form-control form-control-sm"></div>
+    <div class="col-12"><label class="form-label small mb-0">Notes</label><textarea name="notes" class="form-control form-control-sm">{{ t.notes or '' }}</textarea></div>
+  </div>
+  <div class="mt-3"><button class="btn btn-primary">Enregistrer</button>
+    <a href="{{ url_for('tools.show', tid=t.id) if t.id else url_for('tools.index') }}" class="btn btn-link">Annuler</a></div>
+</form>
+{% endblock %}

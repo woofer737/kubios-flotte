@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <div class="text-center mb-4">
+    <div class="display-6 fw-bold" style="color:var(--kb-primary)"><i class="bi bi-truck"></i> Kubios</div>
+    <div class="text-muted">Gestion flotte véhiculaire et inventaire / réparation outils</div>
+  </div>
+  <div class="card"><div class="card-body p-4">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3"><label class="form-label">Courriel</label>
+        <input type="email" name="email" class="form-control" required autofocus autocomplete="username"></div>
+      <div class="mb-3"><label class="form-label">Mot de passe</label>
+        <input type="password" name="password" class="form-control" required autocomplete="current-password"></div>
+      <button class="btn btn-primary w-100">Se connecter</button>
+    </form>
+  </div></div>
+  <p class="text-center text-muted small mt-3">Mot de passe oublié ? Contactez un administrateur.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_macros.html" import wo_table with context %}
+{% block title %}{{ t.name }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+  <div>
+    <div class="text-muted small"><a href="{{ url_for('tools.index') }}">Outils</a> / {{ t.asset_tag or t.id }}</div>
+    <h4 class="mb-0">{{ t.name }} <span class="badge fs-6 {{ {'en_service':'text-bg-success','en_reparation':'text-bg-warning','perdu':'text-bg-danger'}.get(t.status, 'text-bg-secondary') }}">{{ t.status_label }}</span></h4>
+  </div>
+  {% if current_user.can_edit %}
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('workorders.new', type='outil', outil=t.id) }}" class="btn btn-primary btn-sm"><i class="bi bi-wrench"></i> Envoyer en réparation</a>
+    <a href="{{ url_for('tools.edit', tid=t.id) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
+  </div>
+  {% endif %}
+</div>
+<div class="row g-3">
+  <div class="col-xl-5">
+    <div class="card mb-3"><div class="card-body">
+      <dl class="dl-grid mb-0">
+        <dt>No inventaire</dt><dd>{{ t.asset_tag or '—' }}</dd>
+        <dt>Catégorie</dt><dd>{{ t.category.name if t.category else '—' }}</dd>
+        <dt>Marque / modèle</dt><dd>{{ t.brand or '' }} {{ t.model or '' }}</dd>
+        <dt>No série</dt><dd>{{ t.serial or '—' }}</dd>
+        <dt>Quantité</dt><dd>{{ t.quantity }}</dd>
+        <dt>Emplacement</dt><dd>{{ t.location_label }}</dd>
+        <dt>Date d'achat</dt><dd>{{ t.purchase_date|date }}</dd>
+        <dt>Valeur</dt><dd>{{ t.value|money }}</dd>
+      </dl>
+      {% if t.notes %}<pre class="desc mt-2 mb-0">{{ t.notes }}</pre>{% endif %}
+    </div></div>
+    {% if current_user.can_edit %}
+    <div class="card mb-3"><div class="card-header">Déplacer l'outil</div><div class="card-body">
+      <form method="post" action="{{ url_for('tools.move', tid=t.id) }}" class="row g-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="col-6"><select name="vehicle_id" class="form-select form-select-sm"><option value="">Entrepôt / autre</option>
+          {% for v in vehicles %}<option value="{{ v.id }}" {{ 'selected' if t.vehicle_id == v.id }}>Camion #{{ v.unit_number }}{% if v.driver %} — {{ v.driver.name }}{% endif %}</option>{% endfor %}</select></div>
+        <div class="col-6"><input name="location_note" class="form-control form-control-sm" placeholder="Si entrepôt : précision"></div>
+        <div class="col-9"><input name="note" class="form-control form-control-sm" placeholder="Raison (optionnel)"></div>
+        <div class="col-3"><button class="btn btn-sm btn-outline-primary w-100">Déplacer</button></div>
+      </form>
+    </div></div>
+    {% endif %}
+    <div class="card mb-3"><div class="card-header">Historique des déplacements</div>
+      <ul class="list-group list-group-flush small">
+        {% for m in t.moves %}<li class="list-group-item">{{ m.created_at|datetime }} — {{ m.from_label }} → <b>{{ m.to_label }}</b> {% if m.user %}({{ m.user.name }}){% endif %} {% if m.note %}<span class="text-muted">— {{ m.note }}</span>{% endif %}</li>
+        {% else %}<li class="list-group-item text-muted">Aucun déplacement.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-xl-7">
+    <div class="card"><div class="card-header">Réparations</div><div class="card-body p-0">{{ wo_table(wos, show_subject=False) }}</div></div>
+  </div>
+</div>
+{% endblock %}

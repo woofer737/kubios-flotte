@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Journal d'audit{% endblock %}
+{% block content %}
+<h4 class="mb-3">Journal d'audit</h4>
+<form class="card card-body mb-3 py-2">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3"><label class="form-label small mb-0">Utilisateur</label><input name="utilisateur" value="{{ request.args.get('utilisateur', '') }}" class="form-control form-control-sm"></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Élément</label>
+      <select name="entite" class="form-select form-select-sm"><option value="">Tous</option>{% for e in entities %}<option {{ 'selected' if request.args.get('entite') == e }}>{{ e }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Action</label>
+      <select name="action" class="form-select form-select-sm"><option value="">Toutes</option>{% for a in actions %}<option {{ 'selected' if request.args.get('action') == a }}>{{ a }}</option>{% endfor %}</select></div>
+    <div class="col-md-1"><button class="btn btn-sm btn-secondary w-100">Filtrer</button></div>
+  </div>
+</form>
+<div class="card"><div class="table-responsive">
+<table class="table table-sm mb-0 small">
+  <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Élément</th><th>Détails</th><th>IP</th></tr></thead>
+  <tbody>
+  {% for a in pag.items %}
+    <tr><td class="text-nowrap">{{ a.created_at|datetime }}</td><td>{{ a.user_label }}</td><td>{{ a.action }}</td>
+      <td>{{ a.entity or '' }}{% if a.entity_id %} #{{ a.entity_id }}{% endif %}</td><td style="max-width:600px">{{ a.details or '' }}</td><td>{{ a.ip or '' }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+<div class="d-flex gap-2 mt-2">
+  {% set f = dict(utilisateur=request.args.get('utilisateur', ''), entite=request.args.get('entite', ''), action=request.args.get('action', '')) %}
+  {% if pag.has_prev %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit_log', page=pag.prev_num, **f) }}">← Précédent</a>{% endif %}
+  <span class="small text-muted align-self-center">Page {{ pag.page }} / {{ pag.pages or 1 }} ({{ pag.total }} entrées)</span>
+  {% if pag.has_next %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.audit_log', page=pag.next_num, **f) }}">Suivant →</a>{% endif %}
+</div>
+{% endblock %}

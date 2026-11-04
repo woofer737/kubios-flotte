@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier' if v.id else 'Nouveau' }} véhicule{% endblock %}
+{% macro field(name, label, type='text', col='col-md-3', value=None) %}
+<div class="{{ col }}"><label class="form-label small mb-0">{{ label }}</label>
+  <input type="{{ type }}" name="{{ name }}" class="form-control form-control-sm"
+         value="{% set val = value if value is not none else v[name] %}{% if val is not none %}{{ val.isoformat() if type == 'date' else val }}{% endif %}"></div>
+{% endmacro %}
+{% block content %}
+<h4 class="mb-3">{{ 'Modifier l\'unité #' ~ v.unit_number if v.id else 'Nouveau véhicule' }}</h4>
+<form method="post" class="card card-body" style="max-width:1100px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h6 class="text-muted">Identification</h6>
+  <div class="row g-2 mb-3">
+    {{ field('unit_number', '# Unité *', col='col-md-2') }}
+    {{ field('beneva_number', '# Beneva', col='col-md-2') }}
+    <div class="col-md-2"><label class="form-label small mb-0">Statut</label>
+      <select name="status" class="form-select form-select-sm">{% for s in statuses %}<option {{ 'selected' if v.status == s }}>{{ s }}</option>{% endfor %}</select></div>
+    {{ field('year', 'Année', 'number', 'col-md-2') }}
+    {{ field('make', 'Marque', col='col-md-2') }}
+    {{ field('model', 'Modèle', col='col-md-2') }}
+    {{ field('plate', 'Plaque') }}
+    {{ field('vin', 'NIV / série') }}
+    <div class="col-md-3"><label class="form-label small mb-0">Département</label>
+      <input name="department" list="depts" class="form-control form-control-sm" value="{{ v.department or '' }}">
+      <datalist id="depts">{% for d in depts %}<option>{{ d }}</option>{% endfor %}</datalist></div>
+    <div class="col-md-3"><label class="form-label small mb-0">Chauffeur</label>
+      <select name="driver_id" class="form-select form-select-sm"><option value="">—</option>
+        {% for d in drivers %}<option value="{{ d.id }}" {{ 'selected' if v.driver_id == d.id }}>{{ d.name }}</option>{% endfor %}</select></div>
+    {{ field('km_current', 'Odomètre (km)', 'number') }}
+    {{ field('km_annual', 'Km annuel', 'number') }}
+    {{ field('weight', 'Masse (kg)', 'number') }}
+    {{ field('gvwr', 'PNBV (kg)', 'number') }}
+  </div>
+  <h6 class="text-muted">Échéances</h6>
+  <div class="row g-2 mb-3">
+    {{ field('registration_expiry', 'Expiration immatriculation', 'date') }}
+    {{ field('mechanical_inspection', 'Vérification mécanique', 'date') }}
+    {{ field('mechanical_status', 'Statut vérif. méc.') }}
+    {{ field('warranty_end', 'Fin de garantie', 'date') }}
+  </div>
+  <h6 class="text-muted">Acquisition et financement</h6>
+  <div class="row g-2 mb-3">
+    {{ field('ownership', 'Acquisition', col='col-md-4') }}
+    {{ field('financing', 'Financement', col='col-md-4') }}
+    {{ field('lease_end', 'Fin bail / prêt', 'date', 'col-md-4') }}
+    {{ field('monthly_payment', 'Paiement mensuel ($)') }}
+    {{ field('balance_due', 'Solde payable ($)') }}
+  </div>
+  <div class="mb-3"><label class="form-label small mb-0">Remarques</label><textarea name="remarks" rows="3" class="form-control form-control-sm">{{ v.remarks or '' }}</textarea></div>
+  <div><button class="btn btn-primary">Enregistrer</button>
+    <a href="{{ url_for('vehicles.show', vid=v.id) if v.id else url_for('vehicles.index') }}" class="btn btn-link">Annuler</a></div>
+</form>
+{% endblock %}

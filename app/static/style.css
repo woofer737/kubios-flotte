@@ -1,0 +1,38 @@
+:root { --kb-primary: #1e3a5f; --kb-accent: #f59e0b; }
+body { background: #f4f6f9; font-size: .925rem; }
+.kb-nav { background: var(--kb-primary); }
+.kb-nav .nav-link { white-space: nowrap; }
+.kb-nav .nav-link.active { color: #fff; border-bottom: 2px solid var(--kb-accent); }
+.card { border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.card-header { background: #fff; font-weight: 600; }
+.stat-card .value { font-size: 1.9rem; font-weight: 700; line-height: 1; }
+.stat-card .label { color: #6b7280; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+.table td, .table th { vertical-align: middle; }
+.table-sm td, .table-sm th { padding: .35rem .5rem; }
+.badge-st-nouveau { background: #6b7280; }
+.badge-st-ouvert { background: #0ea5e9; }
+.badge-st-assigne { background: #2563eb; }
+.badge-st-rdv { background: #7c3aed; }
+.badge-st-en_reparation { background: #f59e0b; color: #111; }
+.badge-st-attente_pieces { background: #ea580c; }
+.badge-st-termine { background: #16a34a; }
+.badge-st-annule { background: #9ca3af; }
+.prio-urgente { color: #b91c1c; font-weight: 700; }
+.prio-haute { color: #c2410c; font-weight: 600; }
+.overdue { color: #b91c1c; font-weight: 600; }
+.timeline { list-style: none; padding: 0; margin: 0; }
+.timeline li { border-left: 3px solid #e5e7eb; padding: 0 0 .9rem .9rem; position: relative; }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: 3px; width: 11px; height: 11px; border-radius: 50%; background: #9ca3af; }
+.timeline li.k-statut::before { background: #2563eb; }
+.timeline li.k-rdv::before { background: #7c3aed; }
+.timeline li.k-courriel::before { background: #f59e0b; }
+.timeline li.k-note::before { background: #16a34a; }
+.kanban { display: grid; grid-template-columns: repeat(6, minmax(200px, 1fr)); gap: .75rem; overflow-x: auto; }
+.kanban .col-k { background: #e9edf3; border-radius: .5rem; padding: .5rem; min-height: 200px; }
+.kanban .wo-card { background: #fff; border-radius: .4rem; padding: .5rem; margin-bottom: .5rem; box-shadow: 0 1px 2px rgba(0,0,0,.08); font-size: .85rem; }
+.kanban .wo-card a { text-decoration: none; }
+.login-wrap { max-width: 420px; margin: 8vh auto; }
+.dl-grid { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
+.dl-grid dt { color: #6b7280; font-weight: 500; }
+.dl-grid dd { margin: 0; }
+pre.desc { white-space: pre-wrap; font-family: inherit; background: #f8fafc; padding: .75rem; border-radius: .4rem; }

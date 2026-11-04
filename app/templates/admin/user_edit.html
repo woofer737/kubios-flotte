@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Utilisateur{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ u.name if u.id else 'Nouvel utilisateur' }}</h4>
+<form method="post" class="card card-body" style="max-width:650px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-2">
+    <div class="col-md-6"><label class="form-label small mb-0">Nom *</label><input name="name" value="{{ u.name or '' }}" class="form-control" required></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Courriel * (connexion et rappels)</label><input type="email" name="email" value="{{ u.email or '' }}" class="form-control" required></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Téléphone</label><input name="phone" value="{{ u.phone or '' }}" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label small mb-0">Rôle</label>
+      <select name="role" class="form-select">{% for k, l in ROLES.items() %}<option value="{{ k }}" {{ 'selected' if u.role == k }}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="active" id="act" value="1" {{ 'checked' if u.active }}><label for="act" class="form-check-label">Compte actif</label></div>
+    {% if u.id %}<div class="col-12 form-check ms-1"><input class="form-check-input" type="checkbox" name="reset_password" id="rp" value="1"><label for="rp" class="form-check-label">Réinitialiser le mot de passe (un mot de passe temporaire sera généré et envoyé)</label></div>
+    {% else %}<div class="col-12 small text-muted">Un mot de passe temporaire sera généré, affiché et envoyé par courriel.</div>{% endif %}
+  </div>
+  <div class="mt-3"><button class="btn btn-primary">Enregistrer</button> <a href="{{ url_for('admin.users') }}" class="btn btn-link">Annuler</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import wo_table with context %}
+{% block title %}Unité #{{ v.unit_number }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+  <div>
+    <div class="text-muted small"><a href="{{ url_for('vehicles.index') }}">Flotte</a> / #{{ v.unit_number }}</div>
+    <h4 class="mb-0">Unité #{{ v.unit_number }} — {{ v.year or '' }} {{ v.make or '' }} {{ v.model or '' }}
+      <span class="badge fs-6 {{ 'text-bg-success' if v.status == 'Actif' else 'text-bg-secondary' }}">{{ v.status }}</span></h4>
+  </div>
+  {% if current_user.can_edit %}
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('workorders.new', type='vehicule', vehicule=v.id) }}" class="btn btn-primary btn-sm"><i class="bi bi-exclamation-triangle"></i> Signaler un bris</a>
+    <a href="{{ url_for('vehicles.edit', vid=v.id) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil"></i> Modifier</a>
+  </div>
+  {% endif %}
+</div>
+<div class="row g-3">
+  <div class="col-xl-5">
+    <div class="card mb-3"><div class="card-header">Identification</div><div class="card-body">
+      <dl class="dl-grid mb-0">
+        <dt>Plaque</dt><dd>{{ v.plate or '—' }}</dd>
+        <dt>NIV / série</dt><dd>{{ v.vin or '—' }}</dd>
+        <dt># Beneva</dt><dd>{{ v.beneva_number or '—' }}</dd>
+        <dt>Département</dt><dd>{{ v.department or '—' }}</dd>
+        <dt>Chauffeur</dt><dd>{% if v.driver %}<a href="{{ url_for('vehicles.driver_edit', did=v.driver.id) }}">{{ v.driver.name }}</a> {{ v.driver.phone or '' }} <span class="text-muted">{{ v.driver.email or '' }}</span>{% else %}—{% endif %}</dd>
+        <dt>Odomètre</dt><dd>{{ '{:,}'.format(v.km_current).replace(',', ' ') ~ ' km' if v.km_current else '—' }}</dd>
+        <dt>Km annuel estimé</dt><dd>{{ v.km_annual or '—' }}</dd>
+        <dt>Masse / PNBV</dt><dd>{{ v.weight or '—' }} / {{ v.gvwr or '—' }} kg</dd>
+      </dl>
+    </div></div>
+    <div class="card mb-3"><div class="card-header">Échéances et financement</div><div class="card-body">
+      <dl class="dl-grid mb-0">
+        <dt>Immatriculation SAAQ</dt><dd>{{ v.registration_expiry|date if v.registration_expiry and v.registration_expiry.year < 9999 else '—' }}</dd>
+        <dt>Vérif. mécanique</dt><dd>{{ v.mechanical_inspection|date }} {{ v.mechanical_status or '' }}</dd>
+        <dt>Fin de garantie</dt><dd>{{ v.warranty_end|date }}</dd>
+        <dt>Acquisition</dt><dd>{{ v.ownership or '—' }}</dd>
+        <dt>Financement</dt><dd>{{ v.financing or '—' }}</dd>
+        <dt>Fin bail / prêt</dt><dd>{{ v.lease_end|date }}</dd>
+        <dt>Paiement mensuel</dt><dd>{{ v.monthly_payment|money if v.monthly_payment else '—' }}</dd>
+        <dt>Solde payable</dt><dd>{{ v.balance_due|money if v.balance_due else '—' }}</dd>
+      </dl>
+      {% if v.remarks %}<pre class="desc mt-2 mb-0">{{ v.remarks }}</pre>{% endif %}
+    </div></div>
+    {% if v.extra %}
+    <div class="card mb-3"><div class="card-header">Autres informations (Excel)</div><div class="card-body">
+      <dl class="dl-grid mb-0 small">{% for k, val in v.extra.items() %}<dt>{{ k }}</dt><dd>{{ val }}</dd>{% endfor %}</dl>
+    </div></div>
+    {% endif %}
+  </div>
+  <div class="col-xl-7">
+    <div class="card mb-3">
+      <div class="card-header">Bons de travail ({{ v.open_workorders|length }} ouvert(s))</div>
+      <div class="card-body p-0">{{ wo_table(wos, show_subject=False) }}</div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-tools"></i> Outils dans ce camion ({{ v.tools|length }})</span>
+        {% if current_user.can_edit %}<span>
+          <a href="{{ url_for('vehicles.inventory_check', vid=v.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-clipboard-check"></i> Vérifier l'inventaire</a>
+          <a href="{{ url_for('tools.edit', vehicule=v.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus"></i> Outil</a></span>{% endif %}
+      </div>
+      <div class="table-responsive"><table class="table table-sm mb-0">
+        <thead><tr><th>No inv.</th><th>Outil</th><th>Catégorie</th><th>Statut</th></tr></thead>
+        <tbody>
+        {% for t in v.tools %}
+          <tr><td>{{ t.asset_tag or '' }}</td><td><a href="{{ url_for('tools.show', tid=t.id) }}">{{ t.name }}</a> {% if t.quantity > 1 %}×{{ t.quantity }}{% endif %}</td>
+            <td>{{ t.category.name if t.category else '' }}</td><td>{{ t.status_label }}</td></tr>
+        {% else %}<tr><td colspan="4" class="text-muted text-center">Aucun outil associé.</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+      {% if checks %}
+      <div class="card-body border-top small">
+        <b>Dernières vérifications :</b>
+        {% for c in checks %}<div>{{ c.created_at|datetime }} — {{ c.user.name if c.user else '' }} : {{ c.missing_count }} manquant(s), {{ c.broken_count }} brisé(s){% if c.note %} — {{ c.note }}{% endif %}</div>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

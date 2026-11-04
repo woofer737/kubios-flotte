@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Journal des courriels{% endblock %}
+{% block content %}
+<h4 class="mb-3">Journal des courriels</h4>
+<div class="card mb-3"><div class="card-header">Envoyés (200 derniers)</div><div class="table-responsive">
+<table class="table table-sm mb-0 small">
+  <thead><tr><th>Date</th><th>Destinataire(s)</th><th>Objet</th><th>Résultat</th></tr></thead>
+  <tbody>
+  {% for e in out %}
+    <tr><td class="text-nowrap">{{ e.created_at|datetime }}</td><td>{{ e.to }}</td>
+      <td>{% if e.workorder_id %}<a href="{{ url_for('workorders.show', wid=e.workorder_id) }}">{{ e.subject }}</a>{% else %}{{ e.subject }}{% endif %}</td>
+      <td>{% if e.ok %}<span class="text-success">Envoyé</span>{% else %}<span class="text-danger">Échec : {{ e.error }}</span>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="4" class="text-muted text-center">Aucun courriel.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+<div class="card"><div class="card-header">Reçus — signalements (100 derniers)</div><div class="table-responsive">
+<table class="table table-sm mb-0 small">
+  <thead><tr><th>Date</th><th>Expéditeur</th><th>Objet</th><th>Bon de travail</th></tr></thead>
+  <tbody>
+  {% for e in inc %}
+    <tr><td class="text-nowrap">{{ e.received_at|datetime }}</td><td>{{ e.sender }}</td><td>{{ e.subject }}</td>
+      <td>{% if e.workorder %}<a href="{{ url_for('workorders.show', wid=e.workorder.id) }}">{{ e.workorder.number }}</a>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="4" class="text-muted text-center">Aucun courriel reçu.</td></tr>{% endfor %}
+  </tbody>
+</table></div></div>
+{% endblock %}

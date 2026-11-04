@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Utilisateurs</h4>
+  <a href="{{ url_for('admin.user_edit') }}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Ajouter</a>
+</div>
+<div class="card"><div class="table-responsive">
+<table class="table table-sm table-hover mb-0">
+  <thead><tr><th>Nom</th><th>Courriel (rappels)</th><th>Rôle</th><th>Actif</th><th>Dernière connexion</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users %}
+    <tr class="{{ 'text-muted' if not u.active }}"><td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ u.role_label }}</td>
+      <td>{{ 'Oui' if u.active else 'Non' }}{% if u.locked_until and u.locked_until > now %} <span class="badge text-bg-danger">verrouillé</span>{% endif %}</td>
+      <td>{{ u.last_login|datetime }}</td><td><a href="{{ url_for('admin.user_edit', uid=u.id) }}"><i class="bi bi-pencil"></i></a></td></tr>
+  {% endfor %}
+  </tbody>
+</table></div></div>
+<div class="small text-muted mt-2"><b>Administrateur</b> : tout, incluant utilisateurs, paramètres et mises à jour. <b>Gestionnaire</b> : gère véhicules, outils et bons de travail. <b>Lecture seule</b> : consultation.</div>
+{% endblock %}

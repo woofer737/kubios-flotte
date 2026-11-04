@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Configuration initiale{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <h3 class="mb-1">Bienvenue dans Kubios</h3>
+  <p class="text-muted">Premier démarrage : créez le compte administrateur principal.</p>
+  <div class="card"><div class="card-body p-4">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3"><label class="form-label">Nom complet</label><input name="name" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label">Courriel (sert aussi aux rappels)</label><input type="email" name="email" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label">Mot de passe</label><input type="password" name="password" class="form-control" required minlength="10">
+        <div class="form-text">10 caractères minimum, lettres et chiffres.</div></div>
+      <div class="mb-3"><label class="form-label">Confirmer</label><input type="password" name="password2" class="form-control" required></div>
+      <button class="btn btn-primary w-100">Créer le compte</button>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

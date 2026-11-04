@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import wo_table, status_badge with context %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Tableau de bord</h4>
+  {% if current_user.can_edit %}
+  <div class="btn-group">
+    <a href="{{ url_for('workorders.new', type='vehicule') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Bris véhicule</a>
+    <a href="{{ url_for('workorders.new', type='outil') }}" class="btn btn-outline-primary"><i class="bi bi-plus-lg"></i> Réparation outil</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-3">
+  {% set cards = [
+    ('Véhicules actifs', stats.vehicles_active, 'bi-truck', url_for('vehicles.index')),
+    ('Véhicules avec bon ouvert', stats.vehicles_in_repair, 'bi-truck-flatbed', url_for('workorders.index', type='vehicule')),
+    ('Bons ouverts', stats.open, 'bi-wrench-adjustable', url_for('workorders.index')),
+    ('Bons en retard', stats.overdue, 'bi-alarm', url_for('workorders.index', statut='retard')),
+    ('Outils', stats.tools, 'bi-tools', url_for('tools.index')),
+    ('Outils en réparation', stats.tools_repair, 'bi-hammer', url_for('tools.index', statut='en_reparation')),
+  ] %}
+  {% for label, value, icon, link in cards %}
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ link }}" class="text-decoration-none text-reset">
+    <div class="card stat-card h-100"><div class="card-body">
+      <div class="d-flex justify-content-between"><div class="label">{{ label }}</div><i class="bi {{ icon }} text-muted"></i></div>
+      <div class="value mt-2 {{ 'text-danger' if label == 'Bons en retard' and value > 0 }}">{{ value }}</div>
+    </div></div></a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-7">
+    {% if to_sort %}
+    <div class="card mb-3 border-start border-4 border-secondary">
+      <div class="card-header"><i class="bi bi-inbox"></i> À trier — signalements non identifiés ({{ to_sort|length }})</div>
+      <div class="card-body p-0">{{ wo_table(to_sort) }}</div>
+    </div>
+    {% endif %}
+    <div class="card mb-3">
+      <div class="card-header text-danger"><i class="bi bi-alarm"></i> En retard ({{ overdue|length }})</div>
+      <div class="card-body p-0">{{ wo_table(overdue) }}</div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-person-check"></i> Mes bons de travail ({{ mine|length }})</div>
+      <div class="card-body p-0">{{ wo_table(mine) }}</div>
+    </div>
+  </div>
+  <div class="col-xl-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-calendar-event"></i> Rendez-vous garage (14 prochains jours)</div>
+      <ul class="list-group list-group-flush">
+        {% for a in appts %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <b>{{ a.start_at|datetime }}</b>
+            <a href="{{ url_for('workorders.show', wid=a.workorder_id) }}">{{ a.workorder.number }}</a>
+          </div>
+          <div>{{ a.workorder.subject_label }} — {{ a.garage.name if a.garage else 'garage ?' }}</div>
+          <div class="small text-muted">Y va : {{ a.attendee_name }} {% if not a.notified_at %}<span class="badge text-bg-warning">non avisé</span>{% endif %}</div>
+        </li>
+        {% else %}<li class="list-group-item text-muted">Aucun rendez-vous.</li>{% endfor %}
+      </ul>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-calendar-x"></i> Échéances de la flotte</div>
+      <ul class="list-group list-group-flush">
+        {% for a in alerts %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span><a href="{{ url_for('vehicles.show', vid=a.vehicle.id) }}">#{{ a.vehicle.unit_number }}</a> {{ a.vehicle.make or '' }} {{ a.vehicle.model or '' }} — {{ a.label }}</span>
+          <span class="{{ 'overdue' if a.days < 0 else ('text-warning' if a.days < 15) }}">{{ a.date|date }}</span>
+        </li>
+        {% else %}<li class="list-group-item text-muted">Aucune échéance proche.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

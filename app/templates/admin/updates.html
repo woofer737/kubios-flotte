@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Mises à jour{% endblock %}
+{% block content %}
+<h4 class="mb-3">Mises à jour du logiciel</h4>
+<div class="card card-body" style="max-width:850px">
+  <p>Version installée : <b>{{ app_version }}</b></p>
+  {% if not repo %}
+    <div class="alert alert-info">Configurez le dépôt GitHub dans <a href="{{ url_for('admin.settings') }}">Paramètres</a> pour activer les mises à jour.</div>
+  {% endif %}
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+  {% if log %}
+    <div class="alert alert-success"><b>Mise à jour installée.</b> Le logiciel redémarre : rechargez la page dans 15 secondes.<pre class="mb-0 mt-2 small">{{ log }}</pre></div>
+  {% elif info %}
+    <p>Dernière version publiée sur <code>{{ repo }}</code> : <b>{{ info.latest }}</b> {% if info.published %}<span class="text-muted small">({{ info.published[:10] }})</span>{% endif %}</p>
+    {% if info.notes %}<div class="mb-3"><b>Notes de version :</b><pre class="desc small">{{ info.notes }}</pre></div>{% endif %}
+    {% if info.available %}
+      <form method="post" onsubmit="return confirm('Installer la version {{ info.latest }} ? Le logiciel redémarrera (environ 15 secondes).')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-success"><i class="bi bi-cloud-download"></i> Installer la version {{ info.latest }}</button>
+        <div class="form-text">Une sauvegarde de la base est faite automatiquement avant l'installation. Vos données (dossier data/) ne sont jamais modifiées.</div>
+      </form>
+    {% else %}
+      <div class="alert alert-success mb-0">Le logiciel est à jour.</div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
