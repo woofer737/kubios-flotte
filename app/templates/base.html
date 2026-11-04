@@ -38,7 +38,7 @@
         </li>
         {% if current_user.is_admin %}
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {{ 'active' if ep.startswith('admin') }}" href="#" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Administration</a>
+          <a class="nav-link dropdown-toggle {{ 'active' if ep.startswith('admin') }}" href="#" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Administration{% if update_available %} <span class="badge rounded-pill text-bg-warning" title="Mise à jour disponible">1</span>{% endif %}</a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">Utilisateurs</a></li>
             <li><a class="dropdown-item" href="{{ url_for('admin.settings') }}">Paramètres et courriel</a></li>
@@ -47,7 +47,7 @@
             <li><a class="dropdown-item" href="{{ url_for('admin.audit_log') }}">Journal d'audit</a></li>
             <li><a class="dropdown-item" href="{{ url_for('admin.emails') }}">Journal des courriels</a></li>
             <li><a class="dropdown-item" href="{{ url_for('admin.backups') }}">Sauvegardes</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin.updates') }}">Mises à jour</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.updates') }}">Mises à jour{% if update_available %} <span class="badge text-bg-warning">nouvelle version</span>{% endif %}</a></li>
           </ul>
         </li>
         {% endif %}

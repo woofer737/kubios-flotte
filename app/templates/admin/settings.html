@@ -78,6 +78,7 @@
   <div class="card mb-3"><div class="card-header">Mises à jour GitHub</div><div class="card-body row g-2">
     {{ inp('github_repo', 'Dépôt GitHub', help='format : proprietaire/depot') }}
     {{ inp('github_token', 'Jeton d\'accès (si dépôt privé)', help='Jeton « fine-grained » en lecture seule sur Contents') }}
+    {{ inp('update_check_hours', 'Vérifier automatiquement aux (heures)', 'number', 'col-md-4', '0 = jamais (vérification manuelle seulement). Redémarrage requis après changement.') }}
   </div></div>
 
   <div class="card mb-3"><div class="card-header">Formulaire public (optionnel)</div><div class="card-body">

@@ -2,7 +2,7 @@
 import logging
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -65,5 +65,15 @@ def start(app):
     _scheduler.add_job(_job(app, "rappels", run_reminders), "interval", minutes=30, id="reminders")
     _scheduler.add_job(_job(app, "résumé", digest_job), "interval", minutes=15, id="digest")
     _scheduler.add_job(_job(app, "sauvegarde", lambda: backup_db(app)), "cron", hour=2, minute=0, id="backup")
+    with app.app_context():
+        try:
+            update_hours = int(get_setting("update_check_hours") or 6)
+        except ValueError:
+            update_hours = 6
+    if update_hours > 0:
+        from .updater import check_and_store
+        _scheduler.add_job(_job(app, "vérification des mises à jour", check_and_store), "interval",
+                           hours=update_hours, id="update_check",
+                           next_run_time=datetime.now() + timedelta(minutes=2))
     _scheduler.start()
     log.info("Planificateur démarré (boîte courriel aux %s min)", poll)

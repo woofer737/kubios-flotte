@@ -268,12 +268,23 @@ def updates():
     from . import updater
     from .scheduler import backup_db
     info, error, log = None, None, None
-    try:
-        if get_setting("github_repo"):
-            info = updater.check()
-    except Exception as e:  # noqa: BLE001
-        error = str(e)
-    if request.method == "POST" and info and info["available"]:
+    action = request.form.get("action") if request.method == "POST" else None
+    if get_setting("github_repo"):
+        # Ouvrir la page ou cliquer « Vérifier maintenant » interroge GitHub immédiatement.
+        info = updater.check_and_store()
+        if action == "check":
+            audit("verification_mise_a_jour", "systeme", None,
+                  f"dernière version : {info['latest']}" if info else "échec")
+            db.session.commit()
+            st = updater.cached_status()
+            if st["error"]:
+                flash(f"Vérification impossible : {st['error']}", "danger")
+            elif info and info["available"]:
+                flash(f"Nouvelle version disponible : {info['latest']}", "success")
+            else:
+                flash("Vérification faite : le logiciel est à jour.", "info")
+            return redirect(url_for("admin.updates"))
+    if action == "install" and info and info["available"]:
         try:
             log = updater.apply(info["zip_url"], backup_db)
             audit("mise_a_jour_logiciel", "systeme", None, f"{info['current']} → {info['latest']}")
@@ -283,4 +294,8 @@ def updates():
             error = f"Échec de la mise à jour : {e}"
             audit("mise_a_jour_echec", "systeme", None, error)
             db.session.commit()
-    return render_template("admin/updates.html", info=info, error=error, log=log, repo=get_setting("github_repo"))
+    status = updater.cached_status()
+    if not error and status["error"]:
+        error = status["error"]
+    return render_template("admin/updates.html", info=info, error=error, log=log, repo=get_setting("github_repo"),
+                           status=status, every=get_setting("update_check_hours"))

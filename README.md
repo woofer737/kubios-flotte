@@ -103,7 +103,7 @@ Autre fournisseur (Gmail, Videotron…) : choisir **SMTP / IMAP** et entrer serv
 **Publier une mise à jour** :
 1. Modifier le code et augmenter le numéro dans le fichier **`VERSION`** (ex. `1.1.0`).
 2. Pousser sur GitHub, puis créer une **Release** avec le tag `v1.1.0` et des notes de version.
-3. Dans Kubios > **Administration > Mises à jour** : la nouvelle version apparaît. Cliquer **Installer**.
+3. Kubios vérifie GitHub **automatiquement toutes les 6 heures** (réglable dans Paramètres, 0 = jamais). Quand une version est disponible, un badge jaune apparaît sur le menu **Administration**. Pour vérifier tout de suite, ouvrir **Administration > Mises à jour** et cliquer **Vérifier maintenant**, puis **Installer**.
    - Sauvegarde automatique de la base, remplacement des fichiers (jamais `data/`), installation des dépendances, puis redémarrage (environ 15 s).
 
 ## 6. Commandes utiles

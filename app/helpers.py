@@ -145,7 +145,15 @@ def register_template_helpers(app):
 
     @app.context_processor
     def _ctx():
+        update_available = False
+        try:
+            if current_user and current_user.is_authenticated and current_user.is_admin:
+                from .updater import cached_status
+                update_available = cached_status()["available"]
+        except Exception:  # noqa: BLE001
+            pass
         return dict(
+            update_available=update_available,
             WO_STATUS_LABELS=WO_STATUS_LABELS,
             WO_PRIORITY_LABELS=dict(WO_PRIORITIES),
             WO_SOURCE_LABELS=dict(WO_SOURCES),

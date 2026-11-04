@@ -62,6 +62,42 @@ def check():
     }
 
 
+def check_and_store():
+    """Vérifie GitHub et mémorise le résultat (affiché dans le menu et la page Mises à jour).
+    Ne lève pas d'exception : l'erreur est mémorisée."""
+    from datetime import datetime
+    from . import db
+    from .models import set_setting
+    if not (get_setting("github_repo") or "").strip():
+        return None
+    info, error = None, ""
+    try:
+        info = check()
+    except Exception as e:  # noqa: BLE001
+        error = str(e)[:500]
+    set_setting("update_last_check", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    set_setting("update_error", error)
+    if info:
+        set_setting("update_latest", info["latest"])
+        set_setting("update_available", "1" if info["available"] else "0")
+    db.session.commit()
+    return info
+
+
+def cached_status():
+    """Dernier résultat connu, sans appeler GitHub."""
+    from datetime import datetime
+    last = get_setting("update_last_check", "") or ""
+    latest = get_setting("update_latest", "") or ""
+    return {
+        "last_check": datetime.strptime(last, "%Y-%m-%d %H:%M:%S") if last else None,
+        "latest": latest,
+        # Recalculé à partir de VERSION : l'avis disparaît dès que la mise à jour est installée
+        "available": bool(latest) and parse_version(latest) > parse_version(get_version()),
+        "error": get_setting("update_error", "") or "",
+    }
+
+
 def apply(zip_url, backup_fn):
     """Télécharge et installe la mise à jour. Retourne un journal texte."""
     log = []

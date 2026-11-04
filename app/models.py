@@ -425,6 +425,7 @@ DEFAULT_SETTINGS = {
     # Mises à jour
     "github_repo": "",
     "github_token": "",
+    "update_check_hours": "6",
     # Formulaire public
     "public_form_enabled": "0",
     # Avertissement affiché sur la page de connexion (1re ligne = titre, paragraphes séparés par une ligne vide)
