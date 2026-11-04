@@ -184,29 +184,81 @@ def import_excel():
 
 # ------------------------------------------------------------------ sauvegardes
 
+def _backup_file(name):
+    """Retourne le chemin d'une sauvegarde existante (nom vérifié, aucun chemin accepté)."""
+    d = current_app.config["BACKUP_DIR"]
+    if name != os.path.basename(name) or not name.startswith("kubios-") \
+            or not name.endswith((".zip", ".db")) or name not in os.listdir(d):
+        abort(404)
+    return os.path.join(d, name)
+
+
 @bp.route("/sauvegardes", methods=["GET", "POST"])
 def backups():
-    from .scheduler import backup_db
-    d = current_app.config["BACKUP_DIR"]
+    from .backup import create_backup, list_backups
     if request.method == "POST":
-        path = backup_db()
+        path = create_backup(label="manuelle")
         audit("sauvegarde", "systeme", None, os.path.basename(path))
         db.session.commit()
-        flash("Sauvegarde créée.", "success")
+        flash(f"Sauvegarde créée : {os.path.basename(path)}", "success")
         return redirect(url_for("admin.backups"))
-    files = sorted((f for f in os.listdir(d) if f.endswith(".db")), reverse=True)
-    infos = [(f, os.path.getsize(os.path.join(d, f))) for f in files]
-    return render_template("admin/backups.html", files=infos, folder=d)
+    return render_template("admin/backups.html", files=list_backups(),
+                           folder=current_app.config["BACKUP_DIR"])
 
 
 @bp.route("/sauvegardes/<name>")
 def backup_download(name):
-    d = current_app.config["BACKUP_DIR"]
-    if name not in os.listdir(d) or not name.endswith(".db"):
-        abort(404)
+    path = _backup_file(name)
     audit("telechargement_sauvegarde", "systeme", None, name)
     db.session.commit()
-    return send_file(os.path.join(d, name), as_attachment=True)
+    return send_file(path, as_attachment=True)
+
+
+def _do_restore(path, label):
+    from .backup import restore_backup
+    from .updater import schedule_restart
+    who = f"{current_user.email} (id {current_user.id})"
+    try:
+        safety = restore_backup(path)
+    except Exception as e:  # noqa: BLE001
+        db.session.rollback()
+        audit("restauration_echec", "systeme", None, f"{label}: {e}")
+        db.session.commit()
+        flash(f"Restauration impossible : {e}", "danger")
+        return redirect(url_for("admin.backups"))
+    # L'audit est écrit dans la base restaurée : on garde ainsi la trace de l'opération.
+    audit("restauration", "systeme", None, f"{label} restaurée par {who}; état précédent conservé dans {safety}",
+          user=False)
+    db.session.commit()
+    schedule_restart(1.5)
+    return render_template("admin/restored.html", label=label, safety=safety)
+
+
+@bp.route("/sauvegardes/<name>/restaurer", methods=["POST"])
+def backup_restore(name):
+    path = _backup_file(name)
+    if request.form.get("confirm") != "RESTAURER":
+        flash("Tapez RESTAURER pour confirmer.", "warning")
+        return redirect(url_for("admin.backups"))
+    return _do_restore(path, name)
+
+
+@bp.route("/sauvegardes/televerser", methods=["POST"])
+def backup_upload():
+    """Restaurer à partir d'un fichier venant d'ailleurs (ex. migration vers un nouvel ordinateur)."""
+    fs = request.files.get("file")
+    if not fs or not fs.filename.lower().endswith((".zip", ".db")):
+        flash("Choisissez un fichier de sauvegarde Kubios (.zip ou .db).", "danger")
+        return redirect(url_for("admin.backups"))
+    if request.form.get("confirm") != "RESTAURER":
+        flash("Tapez RESTAURER pour confirmer.", "warning")
+        return redirect(url_for("admin.backups"))
+    ext = ".zip" if fs.filename.lower().endswith(".zip") else ".db"
+    from datetime import datetime
+    name = f"kubios-{datetime.now():%Y%m%d-%H%M%S}-televersee{ext}"
+    path = os.path.join(current_app.config["BACKUP_DIR"], name)
+    fs.save(path)
+    return _do_restore(path, f"{fs.filename} (copiée sous {name})")
 
 
 # ------------------------------------------------------------------ mises à jour

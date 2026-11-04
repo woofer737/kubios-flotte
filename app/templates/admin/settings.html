@@ -19,6 +19,9 @@
   <div class="card mb-3"><div class="card-header">Général</div><div class="card-body row g-2">
     {{ inp('company_name', 'Nom de l\'entreprise (préfixe des courriels)') }}
     {{ inp('base_url', 'Adresse du logiciel (liens dans les courriels)', help='ex. http://serveur-kubios:8080') }}
+    <div class="col-12"><label class="form-label small mb-0">Avertissement de la page de connexion</label>
+      <textarea name="login_banner" rows="8" class="form-control form-control-sm">{{ s.login_banner or '' }}</textarea>
+      <div class="form-text">1re ligne = titre. Séparez les paragraphes par une ligne vide. Laissez vide pour ne rien afficher.</div></div>
   </div></div>
 
   <div class="card mb-3"><div class="card-header">Responsables et rappels</div><div class="card-body row g-2">

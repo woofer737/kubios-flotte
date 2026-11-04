@@ -2,16 +2,90 @@
 {% block title %}Sauvegardes{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Sauvegardes de la base de données</h4>
+  <h4 class="mb-0">Sauvegardes et restauration</h4>
   <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-primary"><i class="bi bi-save"></i> Sauvegarder maintenant</button></form>
 </div>
-<p class="small text-muted">Une sauvegarde automatique est faite chaque nuit à 2 h, ainsi qu'avant chaque importation et chaque mise à jour. Les 30 dernières sont conservées dans <code>{{ folder }}</code>. Copiez régulièrement ce dossier sur un autre support (OneDrive, NAS…).</p>
-<div class="card"><table class="table table-sm mb-0">
-  <thead><tr><th>Fichier</th><th>Taille</th><th></th></tr></thead>
-  <tbody>
-  {% for name, size in files %}
-    <tr><td>{{ name }}</td><td>{{ (size / 1024)|round(1) }} Ko</td><td><a href="{{ url_for('admin.backup_download', name=name) }}"><i class="bi bi-download"></i> Télécharger</a></td></tr>
-  {% else %}<tr><td colspan="3" class="text-muted text-center">Aucune sauvegarde.</td></tr>{% endfor %}
-  </tbody>
-</table></div>
+
+<div class="row g-3">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header">Sauvegardes disponibles</div>
+      <div class="table-responsive"><table class="table table-sm table-hover mb-0 align-middle">
+        <thead><tr><th>Fichier</th><th>Date</th><th>Taille</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        {% for name, size, when in files %}
+          <tr>
+            <td><code class="small">{{ name }}</code>
+              {% if 'avant-restauration' in name %}<span class="badge text-bg-warning">avant restauration</span>
+              {% elif 'manuelle' in name %}<span class="badge text-bg-info">manuelle</span>
+              {% elif 'televersee' in name %}<span class="badge text-bg-secondary">téléversée</span>
+              {% elif name.endswith('.db') %}<span class="badge text-bg-light text-dark">ancien format (base seulement)</span>{% endif %}</td>
+            <td class="text-nowrap">{{ when|datetime }}</td>
+            <td class="text-nowrap">{{ (size / 1048576)|round(2) }} Mo</td>
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.backup_download', name=name) }}" title="Télécharger"><i class="bi bi-download"></i></a>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#restoreModal" data-name="{{ name }}" data-when="{{ when|datetime }}"><i class="bi bi-arrow-counterclockwise"></i> Restaurer</button>
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="4" class="text-muted text-center py-3">Aucune sauvegarde.</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card mb-3"><div class="card-header"><i class="bi bi-info-circle"></i> Ce qui est sauvegardé</div><div class="card-body small">
+      <ul class="mb-2 ps-3">
+        <li><b>Toutes les données</b> : véhicules, chauffeurs, garages, outils, bons de travail, rendez-vous, historique, journal d'audit.</li>
+        <li><b>Toute la configuration</b> : utilisateurs et mots de passe, paramètres de courriel Microsoft 365 / SMTP, rappels, GitHub, avertissement de connexion.</li>
+        <li><b>Photos et pièces jointes</b> des bons de travail.</li>
+      </ul>
+      <p class="mb-1"><b>Quand :</b> chaque nuit à 2 h, avant chaque import Excel, avant chaque mise à jour et avant chaque restauration. Les {{ 30 }} plus récentes sont conservées.</p>
+      <p class="mb-0 text-muted">Dossier : <code>{{ folder }}</code><br>Copiez-le régulièrement ailleurs (OneDrive, NAS, clé USB) : si l'ordinateur brise, ces fichiers sont votre seule copie.</p>
+    </div></div>
+
+    <div class="card"><div class="card-header"><i class="bi bi-upload"></i> Restaurer depuis un fichier</div><div class="card-body small">
+      <p>Pour restaurer une sauvegarde copiée ailleurs, ou pour <b>déménager Kubios sur un nouvel ordinateur</b>.</p>
+      <form method="post" action="{{ url_for('admin.backup_upload') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" name="file" accept=".zip,.db" class="form-control form-control-sm mb-2" required>
+        <label class="form-label mb-1">Tapez <b>RESTAURER</b> pour confirmer :</label>
+        <input name="confirm" class="form-control form-control-sm mb-2" autocomplete="off" required>
+        <button class="btn btn-sm btn-outline-danger w-100">Restaurer ce fichier</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+
+<div class="modal fade" id="restoreModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <form method="post" id="restoreForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger"></i> Restaurer une sauvegarde</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <p>Vous allez remettre le logiciel dans l'état du <b id="rWhen"></b><br><code class="small" id="rName"></code></p>
+      <div class="alert alert-warning small mb-3">
+        Tout ce qui a été fait <b>après</b> cette date sera remplacé : bons de travail, modifications, utilisateurs et paramètres.
+        Une sauvegarde de l'état actuel est faite automatiquement juste avant, ce qui permet de revenir en arrière.
+        Le logiciel redémarre et tous les utilisateurs devront se reconnecter.
+      </div>
+      <label class="form-label">Tapez <b>RESTAURER</b> pour confirmer :</label>
+      <input name="confirm" class="form-control" autocomplete="off" required>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-link" data-bs-dismiss="modal">Annuler</button>
+      <button class="btn btn-danger"><i class="bi bi-arrow-counterclockwise"></i> Restaurer</button>
+    </div>
+  </form>
+</div></div></div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('restoreModal').addEventListener('show.bs.modal', e => {
+  const b = e.relatedTarget;
+  document.getElementById('rName').textContent = b.dataset.name;
+  document.getElementById('rWhen').textContent = b.dataset.when;
+  document.getElementById('restoreForm').action = '{{ url_for("admin.backups") }}/' + encodeURIComponent(b.dataset.name) + '/restaurer';
+});
+</script>
 {% endblock %}

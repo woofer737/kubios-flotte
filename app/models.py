@@ -427,6 +427,18 @@ DEFAULT_SETTINGS = {
     "github_token": "",
     # Formulaire public
     "public_form_enabled": "0",
+    # Avertissement affiché sur la page de connexion (1re ligne = titre, paragraphes séparés par une ligne vide)
+    "login_banner": (
+        "ACCÈS AUTORISÉ SEULEMENT\n"
+        "Vous êtes sur le point d'accéder à un système informatique privé de l'entreprise.\n\n"
+        "L'accès à ce système est strictement réservé aux personnes autorisées. Les logiciels, programmes, "
+        "fichiers et données présents sur ce système sont la propriété de l'entreprise ou sont utilisés sous licence.\n\n"
+        "Toute utilisation, copie, modification, divulgation ou distribution non autorisée est interdite.\n\n"
+        "Les activités effectuées sur ce système peuvent être surveillées, enregistrées et auditées conformément "
+        "aux politiques de l'entreprise et aux lois applicables.\n\n"
+        "En poursuivant l'ouverture de session, vous confirmez être autorisé à utiliser ce système et acceptez "
+        "les présentes conditions."
+    ),
 }
 
 

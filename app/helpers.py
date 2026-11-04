@@ -10,14 +10,19 @@ from .models import AuditLog, get_setting, WO_STATUS_LABELS, WO_PRIORITIES, WO_S
 
 def audit(action, entity=None, entity_id=None, details=None, user=None):
     """Enregistre une action dans le journal d'audit (commit fait par l'appelant)."""
-    u = user if user is not None else (current_user if current_user and current_user.is_authenticated else None)
+    if user is False:  # action humaine, mais l'id utilisateur n'est plus fiable (ex. après restauration)
+        label = current_user.email if current_user and current_user.is_authenticated else "système"
+        u = None
+    else:
+        u = user if user is not None else (current_user if current_user and current_user.is_authenticated else None)
+        label = u.email if u else "système"
     try:
         ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     except RuntimeError:
         ip = None  # hors requête (tâche planifiée)
     db.session.add(AuditLog(
         user_id=u.id if u else None,
-        user_label=(u.email if u else "système"),
+        user_label=label,
         action=action, entity=entity, entity_id=entity_id,
         details=details, ip=ip,
     ))

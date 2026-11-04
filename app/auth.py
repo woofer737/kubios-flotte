@@ -86,7 +86,12 @@ def login():
                 audit("connexion_echouee", "user", None, f"courriel inconnu: {email}")
             db.session.commit()
             flash("Courriel ou mot de passe invalide.", "danger")
-    return render_template("auth/login.html")
+    from .models import get_setting
+    banner = (get_setting("login_banner") or "").strip().replace("\r\n", "\n")
+    lines = banner.split("\n", 1) if banner else []
+    banner_title = lines[0].strip() if lines else ""
+    banner_paras = [p.strip() for p in (lines[1] if len(lines) > 1 else "").split("\n\n") if p.strip()]
+    return render_template("auth/login.html", banner_title=banner_title, banner_paras=banner_paras)
 
 
 @bp.route("/logout")

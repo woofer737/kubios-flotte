@@ -45,21 +45,10 @@ def digest_job():
         return "résumé envoyé"
 
 
-def backup_db(app=None):
-    from flask import current_app
-    cfg = (app or current_app).config
-    src = cfg["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
-    if not os.path.exists(src):
-        return None
-    dest = os.path.join(cfg["BACKUP_DIR"], f"kubios-{datetime.now():%Y%m%d-%H%M%S}.db")
-    import sqlite3
-    with sqlite3.connect(src) as s, sqlite3.connect(dest) as d:
-        s.backup(d)
-    # On garde les 30 dernières sauvegardes
-    files = sorted(f for f in os.listdir(cfg["BACKUP_DIR"]) if f.endswith(".db"))
-    for old in files[:-30]:
-        os.remove(os.path.join(cfg["BACKUP_DIR"], old))
-    return dest
+def backup_db(app=None, label=None):
+    """Sauvegarde complète (.zip : base + paramètres + pièces jointes + clé). Voir backup.py."""
+    from .backup import create_backup
+    return create_backup(app, label=label)
 
 
 def start(app):

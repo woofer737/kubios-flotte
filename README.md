@@ -9,7 +9,7 @@ Logiciel web interne qui permet de :
 - **Outils** : inventaire par camion ou entrepôt, déplacements, vérification d'inventaire d'un camion, et bons de réparation d'outils avec les mêmes rappels.
 - **Sécurité** : connexion par courriel et mot de passe, verrouillage après 5 essais, 3 rôles (Administrateur, Gestionnaire, Lecture seule) et **journal d'audit** de toutes les actions.
 - **Mises à jour** via les *Releases* GitHub, depuis l'écran Administration > Mises à jour.
-- **Sauvegardes** automatiques chaque nuit (30 conservées).
+- **Sauvegardes complètes** automatiques chaque nuit (30 conservées) et **restauration** en quelques clics.
 
 ---
 
@@ -31,6 +31,13 @@ Pour tester sans service : `demarrer.bat`. Pour retirer le service : `desinstall
 
 ### Où sont les données ?
 Tout est dans le dossier **`data\`** : base de données `kubios.db`, pièces jointes, sauvegardes et journal `kubios.log`. **Copiez régulièrement `data\backups` ailleurs** (OneDrive, NAS).
+
+### Sauvegarde et restauration
+Chaque sauvegarde est un fichier `.zip` dans `data\backups`. Elle contient **toutes** les données, **toute** la configuration (utilisateurs, paramètres de courriel Microsoft 365, rappels, GitHub, avertissement de connexion) et les photos et pièces jointes.
+
+- Automatique chaque nuit à 2 h, et avant chaque import, mise à jour ou restauration.
+- **Administration > Sauvegardes > Restaurer** : remet le logiciel dans l'état choisi. Il faut taper `RESTAURER` pour confirmer. L'état actuel est sauvegardé juste avant, ce qui permet de revenir en arrière. Le logiciel redémarre ensuite.
+- **Déménager sur un nouvel ordinateur** : installer Kubios sur le nouveau poste, créer un compte temporaire, puis *Restaurer depuis un fichier* avec le `.zip` de l'ancien poste. Ce sont ensuite les comptes de l'ancien poste qui s'appliquent.
 
 ## 2. Premiers pas
 
