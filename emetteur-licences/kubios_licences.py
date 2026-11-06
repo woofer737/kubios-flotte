@@ -23,6 +23,10 @@ DATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), APP_
 KEY_PATH = os.path.join(DATA_DIR, "cle-privee.pem")
 REGISTRY = os.path.join(DATA_DIR, "licences-emises.json")
 PREFIX = "KBL1"
+# Clés publiques acceptées par Kubios (doit correspondre à PUBLIC_KEYS dans app/licence.py).
+KUBIOS_PUBLIC_KEYS = [
+    "PAsKsTFGyvKEQjJ7QyZTTqbA2THTHh1PKlUBnt32hNQ=",
+]
 NAVY, AMBER = "#1e3a5f", "#f59e0b"
 
 
@@ -81,6 +85,25 @@ def sign(key, data):
     return f"{PREFIX}.{b64u(payload)}.{b64u(key.sign(payload))}"
 
 
+def verify_like_kubios(lic):
+    """Vérifie la licence exactement comme Kubios le fera. Retourne True si acceptée."""
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    _, p, s = lic.split(".")
+    payload = base64.urlsafe_b64decode(p + "=" * (-len(p) % 4))
+    sig = base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+    for pub in KUBIOS_PUBLIC_KEYS:
+        try:
+            Ed25519PublicKey.from_public_bytes(base64.b64decode(pub)).verify(sig, payload)
+            return True
+        except Exception:  # noqa: BLE001
+            continue
+    return False
+
+
+def key_matches_kubios(key):
+    return key is not None and public_b64(key) in KUBIOS_PUBLIC_KEYS
+
+
 def parse_date(s):
     s = s.strip()
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
@@ -117,6 +140,11 @@ class App(tk.Tk):
         self._build_key()
         tk.Label(self, text=f"Propulsé par Groupe SRB — © {date.today().year}   ·   v{VERSION}", bg="#eef2f7",
                  fg="#64748b", font=("Segoe UI", 8)).pack(pady=(0, 6))
+        if self.key and not key_matches_kubios(self.key):
+            nb.select(self.tab_key)
+            self.after(300, lambda: messagebox.showerror(
+                APP_NAME, "La clé de signature de ce poste ne correspond pas à Kubios.\n\n"
+                          "Les licences émises seraient refusées. Importez la bonne clé (onglet « Clé de signature »)."))
         if not self.key:
             nb.select(self.tab_key)
             self.after(300, lambda: messagebox.showwarning(
@@ -252,6 +280,12 @@ class App(tk.Tk):
                 "installation": self.v_inst.get().strip().upper(), "emis": datetime.now().isoformat(timespec="seconds"),
                 "note": self.v_note.get().strip()}
         lic = sign(self.key, data)
+        if not verify_like_kubios(lic):
+            messagebox.showerror(APP_NAME, "Licence NON émise : la clé de signature chargée sur ce poste ne "
+                                           "correspond pas à celle de Kubios, qui refuserait cette licence.\n\n"
+                                           f"Clé chargée : {KEY_PATH}\n\n"
+                                           "Onglet « Clé de signature » : importez la bonne clé (cle-privee.pem).")
+            return
         self.items.append(dict(data, cle=lic))
         save_registry(self.items)
         self.last = dict(data, cle=lic)
@@ -321,6 +355,8 @@ class App(tk.Tk):
                 continue
             left = (date.fromisoformat(it["fin"]) - today).days
             etat, tag = ("Expirée", "exp") if left < 0 else (f"{left} j restants", "soon") if left <= 30 else ("Active", "")
+            if not verify_like_kubios(it["cle"]):
+                etat, tag = "INVALIDE (refusée)", "exp"
             self.tree.insert("", "end", iid=str(len(self.items) - 1 - i), tags=(tag,),
                              values=(it["id"], it["client"], it["debut"], it["fin"], it["responsables"], etat,
                                      it.get("installation") or "—", it.get("note", "")))
@@ -354,7 +390,13 @@ class App(tk.Tk):
             w.destroy()
         ttk.Label(f, text="Clé de signature de Groupe SRB", style="H.TLabel").pack(anchor="w")
         if self.key:
-            ttk.Label(f, text=f"✔  Clé chargée : {KEY_PATH}").pack(anchor="w", pady=(8, 2))
+            ttk.Label(f, text=f"Clé chargée : {KEY_PATH}").pack(anchor="w", pady=(8, 2))
+            if key_matches_kubios(self.key):
+                ttk.Label(f, text="✔  Cette clé correspond à Kubios : les licences seront acceptées.",
+                          foreground="#15803d").pack(anchor="w")
+            else:
+                ttk.Label(f, text="✖  Cette clé NE correspond PAS à Kubios : les licences seraient refusées. "
+                                  "Importez la bonne clé.", foreground="#b91c1c").pack(anchor="w")
             ttk.Label(f, text="Clé publique (celle inscrite dans Kubios) :", style="Muted.TLabel").pack(anchor="w", pady=(8, 0))
             e = ttk.Entry(f, width=60, font=("Consolas", 10))
             e.insert(0, public_b64(self.key))
@@ -431,8 +473,27 @@ def cli_sign(args):
     print(sign(key, data))
 
 
+def diagnostic(path):
+    """kubios_licences.exe --diagnostic fichier.txt : écrit la clé chargée et une signature de contrôle."""
+    key = load_key()
+    payload = b'{"test":1}'
+    sig = key.sign(payload) if key else b""
+    ok = None
+    if key:
+        try:
+            key.public_key().verify(sig, payload)
+            ok = True
+        except Exception:  # noqa: BLE001
+            ok = False
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"frozen={getattr(sys, 'frozen', False)}\nkey_path={KEY_PATH}\n"
+                f"public={public_b64(key) if key else None}\nsig={b64u(sig)}\nselfverify={ok}\n")
+
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--signer":
+    if len(sys.argv) > 2 and sys.argv[1] == "--diagnostic":
+        diagnostic(sys.argv[2])
+    elif len(sys.argv) > 1 and sys.argv[1] == "--signer":
         cli_sign(sys.argv[2:])
     else:
         App().mainloop()
