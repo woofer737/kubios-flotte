@@ -25,6 +25,7 @@ REGISTRY = os.path.join(DATA_DIR, "licences-emises.json")
 PREFIX = "KBL1"
 # Clés publiques acceptées par Kubios (doit correspondre à PUBLIC_KEYS dans app/licence.py).
 KUBIOS_PUBLIC_KEYS = [
+    "Uspw1aM5CkwVZMIdDMfk5nKlgUCIXBtIFsos66KanzA=",
     "PAsKsTFGyvKEQjJ7QyZTTqbA2THTHh1PKlUBnt32hNQ=",
 ]
 NAVY, AMBER = "#1e3a5f", "#f59e0b"

@@ -24,7 +24,8 @@ from .models import User, get_setting, set_setting
 
 # Clés publiques acceptées (la première est la clé actuelle de Groupe SRB).
 PUBLIC_KEYS = [
-    "PAsKsTFGyvKEQjJ7QyZTTqbA2THTHh1PKlUBnt32hNQ=",
+    "Uspw1aM5CkwVZMIdDMfk5nKlgUCIXBtIFsos66KanzA=",  # clé de Groupe SRB (poste de Steve, nov. 2026)
+    "PAsKsTFGyvKEQjJ7QyZTTqbA2THTHh1PKlUBnt32hNQ=",  # clé initiale (licence L-20261106-05)
 ]
 
 PREFIX = "KBL1"
