@@ -26,7 +26,23 @@ def _guard():
 
 @bp.route("/utilisateurs")
 def users():
-    return render_template("admin/users.html", users=User.query.order_by(User.name).all())
+    from .licence import status
+    return render_template("admin/users.html", users=User.query.order_by(User.name).all(), lic=status())
+
+
+def _exceeds_licence(u, role, active):
+    """Refuse d'ajouter un responsable (administrateur / gestionnaire actif) au-delà de la licence."""
+    from .licence import can_add_manager, MANAGER_ROLES
+    was = u.id is not None and u.active and u.role in MANAGER_ROLES
+    will = active and role in MANAGER_ROLES
+    if will and not was:
+        ok, s = can_add_manager()
+        if not ok:
+            flash(f"Votre licence permet {s['max']} responsable(s) (administrateurs et gestionnaires actifs) et "
+                  f"{s['used']} sont déjà utilisés. Choisissez le rôle « Lecture seule », désactivez un autre "
+                  f"responsable, ou demandez une licence plus grande à Groupe SRB.", "danger")
+            return True
+    return False
 
 
 @bp.route("/utilisateurs/nouveau", methods=["GET", "POST"])
@@ -47,6 +63,8 @@ def user_edit(uid=None):
             flash("Ce courriel est déjà utilisé.", "danger")
         elif u.id == current_user.id and (role != "admin" or not active):
             flash("Vous ne pouvez pas retirer vos propres droits d'administrateur.", "danger")
+        elif _exceeds_licence(u, role, active):
+            pass
         else:
             is_new = u.id is None
             before = f"{u.email}|{u.name}|{u.role}|{u.active}" if not is_new else ""
@@ -262,6 +280,40 @@ def backup_upload():
 
 
 # ------------------------------------------------------------------ mises à jour
+
+@bp.route("/licence", methods=["GET", "POST"])
+def licence():
+    from datetime import date
+    from . import licence as L
+    if request.method == "POST":
+        key = request.form.get("key", "").strip()
+        f = request.files.get("file")
+        if f and f.filename:
+            key = f.read().decode("utf-8", "ignore").strip()
+        try:
+            data = L.check_key(key)
+            if data["debut_d"] > date.today():
+                raise L.LicenceError(f"Cette licence débute le {data['debut']}. Installez-la à partir de cette date.")
+            if data["fin_d"] < date.today():
+                raise L.LicenceError(f"Cette licence est déjà expirée (fin : {data['fin']}).")
+            used = L.managers_used()
+            if used > data["responsables"]:
+                flash(f"Attention : {used} responsables sont actifs, mais cette licence en permet "
+                      f"{data['responsables']}. Ils gardent leur accès, mais vous ne pourrez pas en ajouter.",
+                      "warning")
+            L.install(key)
+            audit("installation", "licence", None, f"{data.get('id')} {data.get('client')} {data['debut']} → "
+                  f"{data['fin']}, {data['responsables']} responsables")
+            db.session.commit()
+            flash(f"Licence installée : valide jusqu'au {data['fin']} pour {data['responsables']} responsable(s).",
+                  "success")
+            return redirect(url_for("admin.licence"))
+        except L.LicenceError as e:
+            flash(str(e), "danger")
+        except Exception:  # noqa: BLE001
+            flash("Clé de licence illisible.", "danger")
+    return render_template("admin/licence.html", s=L.status(), trial_days=L.TRIAL_DAYS)
+
 
 @bp.route("/mises-a-jour", methods=["GET", "POST"])
 def updates():

@@ -7,3 +7,12 @@ data/
 .claude/
 *.db
 *.key
+
+# Emetteur de licences : environnement et sorties de compilation, cles
+emetteur-licences/.venv-build/
+emetteur-licences/build/
+emetteur-licences/dist/
+*.spec
+*.pem
+*.lic
+emetteur-licences/build.log

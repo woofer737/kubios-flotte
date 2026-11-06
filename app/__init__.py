@@ -3,7 +3,7 @@ import os
 import secrets
 from datetime import timedelta
 
-from flask import Flask, redirect, url_for, request
+from flask import Flask, redirect, url_for, request, render_template
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
@@ -50,6 +50,10 @@ def _migrate():
             cols = {r[1] for r in conn.execute(text(f"PRAGMA table_info({table})"))}
             if cols and col not in cols:
                 conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}"))
+
+
+LICENCE_OPEN_ENDPOINTS = ("auth.login", "auth.logout", "auth.change_password", "auth.setup", "static",
+                          "admin.licence")
 
 
 def create_app(start_scheduler=False):
@@ -108,6 +112,14 @@ def create_app(start_scheduler=False):
         if current_user.is_authenticated and current_user.must_change_password \
                 and request.endpoint not in ("auth.change_password", "auth.logout"):
             return redirect(url_for("auth.change_password"))
+        # Licence expirée : seuls les administrateurs gardent l'accès à la licence et aux sauvegardes.
+        if current_user.is_authenticated and request.endpoint not in LICENCE_OPEN_ENDPOINTS:
+            from .licence import blocked
+            if blocked():
+                if not current_user.is_admin:
+                    return render_template("auth/licence_bloquee.html"), 403
+                if not (request.endpoint or "").startswith("admin.backup"):
+                    return redirect(url_for("admin.licence"))
 
     if start_scheduler:
         from .scheduler import start

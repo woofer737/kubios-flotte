@@ -7,3 +7,4 @@ APScheduler==3.11.3
 waitress==3.0.2
 requests==2.34.2
 fpdf2==2.9.0
+cryptography==50.0.2

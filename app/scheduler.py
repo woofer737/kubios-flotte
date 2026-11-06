@@ -8,12 +8,18 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 log = logging.getLogger("kubios.scheduler")
 _scheduler = None
+# Tâches suspendues quand la licence est expirée (les sauvegardes et mises à jour continuent).
+LICENSED_JOBS = {"courriels entrants", "rappels", "résumé"}
 
 
 def _job(app, name, fn):
     def run():
         with app.app_context():
             try:
+                if name in LICENSED_JOBS:
+                    from .licence import blocked
+                    if blocked():
+                        return
                 result = fn()
                 if result:
                     log.info("%s : %s", name, result)

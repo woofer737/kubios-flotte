@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Licence{% endblock %}
+{% block content %}
+{% set badge = {'valide': ('success', 'Valide'), 'bientot': ('warning', 'Expire bientôt'), 'grace': ('danger', 'Expirée — période de grâce'),
+                'expiree': ('danger', 'Expirée'), 'essai': ('info', "Période d'essai"), 'essai_termine': ('danger', 'Essai terminé'),
+                'invalide': ('danger', 'Invalide')}[s.state] %}
+<h4 class="mb-3">Licence</h4>
+<div class="row g-3" style="max-width:1000px">
+  <div class="col-lg-6">
+    <div class="card card-body h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <b>État</b><span class="badge text-bg-{{ badge[0] }} fs-6">{{ badge[1] }}</span>
+      </div>
+      {% if s.error %}<div class="alert alert-danger small py-2">{{ s.error }}</div>{% endif %}
+      <dl class="row small mb-0">
+        {% if s.lic %}
+          <dt class="col-5">Client</dt><dd class="col-7">{{ s.lic.client }}</dd>
+          <dt class="col-5">N° de licence</dt><dd class="col-7"><code>{{ s.lic.id }}</code></dd>
+          <dt class="col-5">Période</dt><dd class="col-7">{{ s.lic.debut_d|date }} au {{ s.lic.fin_d|date }}</dd>
+          <dt class="col-5">Jours restants</dt><dd class="col-7">{{ s.days_left if s.days_left >= 0 else 'expirée depuis ' ~ (-s.days_left) ~ ' jour(s)' }}</dd>
+          {% if s.lic.installation %}<dt class="col-5">Liée au poste</dt><dd class="col-7"><code>{{ s.lic.installation }}</code></dd>{% endif %}
+        {% elif s.state in ('essai', 'essai_termine') %}
+          <dt class="col-5">Fin de l'essai</dt><dd class="col-7">{{ s.trial_end|date }}{% if s.days_left >= 0 %} ({{ s.days_left + 1 }} jour(s)){% endif %}</dd>
+        {% endif %}
+        <dt class="col-5">Responsables</dt>
+        <dd class="col-7 {{ 'text-danger fw-semibold' if s.max is not none and s.used > s.max }}">{{ s.used }} utilisés sur {{ s.max if s.max is not none else '—' }}
+          <div class="text-muted">Administrateurs et gestionnaires actifs. Lecture seule : illimité.</div></dd>
+        <dt class="col-5">ID de cette installation</dt>
+        <dd class="col-7"><code id="iid">{{ s.installation }}</code>
+          <button type="button" class="btn btn-sm btn-link p-0 ms-1" onclick="navigator.clipboard.writeText('{{ s.installation }}');this.innerHTML='<i class=\'bi bi-check2\'></i> copié'"><i class="bi bi-clipboard"></i> copier</button>
+          <div class="text-muted">À donner à Groupe SRB pour une licence liée à ce poste.</div></dd>
+      </dl>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <form method="post" enctype="multipart/form-data" class="card card-body h-100">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <b class="mb-2">Installer une nouvelle licence</b>
+      <label class="form-label small mb-0">Collez la clé reçue de Groupe SRB</label>
+      <textarea name="key" rows="5" class="form-control form-control-sm font-monospace" placeholder="KBL1.…"></textarea>
+      <div class="text-center small text-muted my-2">ou</div>
+      <label class="form-label small mb-0">Choisissez le fichier .lic</label>
+      <input type="file" name="file" accept=".lic,.txt" class="form-control form-control-sm">
+      <button class="btn btn-primary mt-3"><i class="bi bi-key"></i> Installer la licence</button>
+      <div class="form-text">La nouvelle licence remplace l'actuelle immédiatement.</div>
+    </form>
+  </div>
+</div>
+<div class="small text-muted mt-3" style="max-width:1000px">
+  Sans licence, Kubios fonctionne {{ trial_days }} jours en essai. Un avertissement s'affiche 30 jours avant l'expiration. Après l'expiration, tout fonctionne encore 7 jours (bandeau rouge).
+  Ensuite, l'accès est bloqué et les courriels automatiques sont suspendus jusqu'à l'installation d'une nouvelle licence. Les données ne sont jamais effacées, et les sauvegardes et mises à jour continuent.
+</div>
+{% endblock %}

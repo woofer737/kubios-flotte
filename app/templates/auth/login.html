@@ -30,6 +30,20 @@
     .lg-feat { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 14px; max-width: 480px; position: relative; z-index: 1; }
     .lg-feat li { display: flex; gap: 12px; align-items: flex-start; color: rgba(255,255,255,.9); }
     .lg-feat i { color: var(--kb-accent); font-size: 1.15rem; margin-top: 1px; }
+    .lg-cloud { position: relative; flex: 1; margin: 28px 0; min-height: 320px; z-index: 1; }
+    .lg-cloud .w { position: absolute; white-space: nowrap; font-weight: 600; line-height: 1; letter-spacing: .01em;
+      opacity: 0; animation: lgIn .9s ease-out forwards; }
+    .lg-cloud .main { color: #fff; font-weight: 700; }
+    .lg-cloud .accent { color: var(--kb-accent); font-weight: 700; }
+    .lg-cloud .hi { color: rgba(255,255,255,.85); }
+    .lg-cloud .mid { color: rgba(255,255,255,.5); }
+    .lg-cloud .low { color: rgba(255,255,255,.32); font-weight: 500; }
+    .lg-cloud .faint { color: rgba(255,255,255,.2); font-weight: 500; }
+    @keyframes lgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .lg-tag { position: relative; z-index: 1; }
+    .lg-tag .h { font-size: 1.15rem; font-weight: 600; color: rgba(255,255,255,.9); margin-bottom: 6px; }
+    .lg-powered { margin-top: 18px; text-align: center; font-size: .78rem; color: #64748b; }
+    .lg-powered b { color: var(--kb-primary); font-weight: 600; }
     .lg-foot { color: rgba(255,255,255,.5); font-size: .8rem; position: relative; z-index: 1; }
     .lg-side { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
     .lg-panel { width: 100%; max-width: 440px; }
@@ -48,7 +62,7 @@
     @media (max-width: 991.98px) {
       .lg-wrap { grid-template-columns: 1fr; }
       .lg-hero { padding: 28px 24px; }
-      .lg-hero h1, .lg-hero p.lead, .lg-feat, .lg-foot { display: none; }
+      .lg-cloud, .lg-tag { display: none; }
       .lg-hero::after { display: none; }
       .lg-side { padding: 24px 16px 40px; }
       .lg-card { padding: 24px; }
@@ -61,16 +75,24 @@
     <div>
       <div class="lg-brand"><span class="logo"><i class="bi bi-truck"></i></span>
         <span>Kubios <span class="fw-normal opacity-75">Flotte & Outils</span></span></div>
-      <h1>Gestion de la flotte véhiculaire et des outils</h1>
-      <p class="lead">Un seul endroit pour suivre les bris, les réparations et les rendez-vous garage{% if company_name and company_name != 'Kubios' %} chez {{ company_name }}{% endif %}.</p>
-      <ul class="lg-feat">
-        <li><i class="bi bi-wrench-adjustable-circle"></i><span>Bons de travail ouverts par téléphone ou automatiquement par courriel</span></li>
-        <li><i class="bi bi-calendar2-check"></i><span>Rendez-vous garage et dispatch des chauffeurs</span></li>
-        <li><i class="bi bi-tools"></i><span>Inventaire des outils par camion et suivi des réparations</span></li>
-        <li><i class="bi bi-bell"></i><span>Rappels automatiques et échéances de la flotte</span></li>
-      </ul>
     </div>
-    <div class="lg-foot">Version {{ app_version }}</div>
+    <div class="lg-cloud" aria-hidden="true">
+      {% for word, x, y, size, tone in [
+        ('Bienvenue', 8, 30, 3.4, 'main'), ('Kaabo', 58, 14, 2.5, 'accent'), ('Welcome', 46, 44, 2.6, 'hi'),
+        ('Bienvenido', 6, 58, 1.7, 'mid'), ('Karibu', 66, 66, 1.9, 'mid'), ('Willkommen', 14, 8, 1.3, 'low'),
+        ('Akwaba', 36, 74, 1.6, 'mid'), ('Benvenuto', 70, 36, 1.25, 'low'), ('ようこそ', 30, 18, 1.35, 'low'),
+        ('Bem-vindo', 4, 84, 1.2, 'low'), ('Witamy', 80, 84, 1.15, 'low'), ('مرحبا', 82, 6, 1.4, 'low'),
+        ('Välkommen', 46, 90, 1.1, 'faint'), ('환영합니다', 60, 78, 1.0, 'faint'), ('Hoş geldiniz', 18, 72, 1.0, 'faint'),
+        ('欢迎', 88, 52, 1.5, 'low'), ('Selamat datang', 40, 4, 1.0, 'faint'), ('स्वागत है', 4, 44, 1.05, 'faint'),
+        ('Aloha', 34, 58, 1.1, 'faint'), ('Καλώς ήρθατε', 62, 94, 0.95, 'faint'), ('Mabuhay', 84, 24, 1.0, 'faint'),
+        ('Добро пожаловать', 10, 96, 0.95, 'faint')] %}
+      <span class="w {{ tone }}" style="left:{{ x }}%;top:{{ y }}%;font-size:{{ size }}rem;animation-delay:{{ loop.index0 * 60 }}ms">{{ word }}</span>
+      {% endfor %}
+    </div>
+    <div class="lg-tag">
+      <div class="h">Gestion de la flotte véhiculaire et des outils</div>
+      <div class="lg-foot">Version {{ app_version }}</div>
+    </div>
   </section>
 
   <section class="lg-side">
@@ -107,6 +129,7 @@
         {% for p in banner_paras %}<p>{{ p }}</p>{% endfor %}
       </div>
       {% endif %}
+      <div class="lg-powered">Propulsé par <b>Groupe SRB</b> — © {{ now.year }}</div>
     </div>
   </section>
 </div>

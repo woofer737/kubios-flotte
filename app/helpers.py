@@ -152,7 +152,28 @@ def register_template_helpers(app):
                 update_available = cached_status()["available"]
         except Exception:  # noqa: BLE001
             pass
+        licence_banner = None
+        try:
+            if current_user and current_user.is_authenticated:
+                from .licence import status, GRACE_DAYS
+                ls = status()
+                st, left = ls["state"], ls["days_left"]
+                if st == "grace":
+                    licence_banner = ("danger", f"La licence Kubios est expirée depuis {-left} jour(s). "
+                                                f"L'accès sera bloqué dans {GRACE_DAYS + left + 1} jour(s).")
+                elif st in ("expiree", "essai_termine", "invalide"):
+                    licence_banner = ("danger", ls.get("error") or "La licence Kubios est expirée.")
+                elif current_user.is_admin and st == "bientot":
+                    licence_banner = ("warning", f"La licence Kubios expire dans {left} jour(s), le {ls['lic']['fin']}.")
+                elif current_user.is_admin and st == "essai":
+                    licence_banner = ("info", f"Version d'essai : {left + 1} jour(s) restant(s). "
+                                              f"Installez une licence de Groupe SRB.")
+                elif current_user.is_admin and ls["max"] is not None and ls["used"] > ls["max"]:
+                    licence_banner = ("warning", f"{ls['used']} responsables actifs pour {ls['max']} permis par la licence.")
+        except Exception:  # noqa: BLE001
+            pass
         return dict(
+            licence_banner=licence_banner,
             update_available=update_available,
             WO_STATUS_LABELS=WO_STATUS_LABELS,
             WO_PRIORITY_LABELS=dict(WO_PRIORITIES),

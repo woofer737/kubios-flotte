@@ -29,6 +29,8 @@ Prérequis : Windows 10/11 et **Python 3.12+** (https://www.python.org/downloads
 
 > L'ordinateur doit rester allumé (désactiver la mise en veille dans Windows : Paramètres > Système > Alimentation).
 
+**Arrêter / redémarrer** (clic droit > *Exécuter en tant qu'administrateur*) : `arreter.bat` arrête Kubios. Il redémarrera au prochain démarrage de l'ordinateur. `redemarrer.bat` le relance.
+
 Pour tester sans service : `demarrer.bat`. Pour retirer le service : `desinstaller-service.bat` (en administrateur). Les données sont conservées.
 
 ### Où sont les données ?
@@ -115,7 +117,30 @@ Autre fournisseur (Gmail, Videotron…) : choisir **SMTP / IMAP** et entrer serv
 > Le filet de sécurité est actif à partir de la version 1.3.0 : la mise à jour *vers* la 1.3.0 se fait encore sans filet.
    - Sauvegarde automatique de la base, remplacement des fichiers (jamais `data/`), installation des dépendances, puis redémarrage (environ 15 s).
 
-## 6. Commandes utiles
+## 6. Licences
+
+Kubios a besoin d'une licence émise par **Groupe SRB**. Sans licence, il fonctionne **30 jours en essai**, avec 3 responsables au maximum.
+
+- **Administration > Licence** : on y voit l'état, la date de fin, les responsables utilisés sur le nombre permis et l'**ID d'installation**. On y installe une licence en collant la clé (`KBL1.…`) ou en choisissant le fichier `.lic`.
+- **Responsables** = utilisateurs *Administrateur* et *Gestionnaire* actifs. Les comptes *Lecture seule* sont illimités. Au-delà de la limite, Kubios refuse d'en ajouter.
+- **Expiration** :
+  - avertissement aux administrateurs 30 jours avant ;
+  - 7 jours de grâce avec un bandeau rouge ;
+  - ensuite, l'accès est bloqué et les courriels automatiques sont suspendus. Les administrateurs peuvent encore ouvrir la page Licence et les Sauvegardes.
+  - Les données ne sont jamais effacées.
+- La licence est signée numériquement (Ed25519). Kubios contient seulement la clé **publique** : il peut vérifier une licence, mais pas en fabriquer.
+
+### Émettre une licence : `KubiosLicences.exe`
+
+Le logiciel se trouve dans le dossier `emetteur-licences\`. Pour le recompiler : `construire-exe.bat`, qui produit `dist\KubiosLicences.exe`.
+
+1. **Nouvelle licence** : client, date de début, durée (1, 3, 6, 12 mois ou date précise) et nombre de responsables. On peut aussi entrer l'ID d'installation pour lier la licence à un seul poste.
+2. **Émettre**, puis **Copier la clé** ou **Enregistrer le fichier .lic**, et l'envoyer au client.
+3. **Licences émises** : l'historique, avec recherche, copie de la clé et **Renouveler** (reprend le client et commence le lendemain de la fin).
+
+La **clé privée** de signature est dans `%APPDATA%\Kubios Licences\cle-privee.pem`. **Faites-en une copie de sauvegarde** (onglet *Clé de signature > Exporter*). Sans elle, il est impossible d'émettre des licences acceptées par les Kubios installés. Ne la mettez jamais sur GitHub et ne l'envoyez à personne.
+
+## 7. Commandes utiles
 
 ```bat
 .venv\Scripts\python.exe manage.py import-excel "C:\chemin\fichier.xlsx"
@@ -126,7 +151,7 @@ Autre fournisseur (Gmail, Videotron…) : choisir **SMTP / IMAP** et entrer serv
 
 Mot de passe administrateur perdu : `manage.py create-admin` crée un nouvel administrateur avec un mot de passe temporaire.
 
-## 7. Architecture
+## 8. Architecture
 
 - Python / Flask, base SQLite (`data\kubios.db`), serveur Waitress, tâches planifiées APScheduler.
 - `app/` : `models.py` (données), `services.py` (bons de travail, rappels, courriels entrants), `mailer.py` (Microsoft 365 / SMTP / IMAP), `importer.py` (Excel), `updater.py` (GitHub), `scheduler.py`, écrans dans `templates/`.
