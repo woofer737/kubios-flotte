@@ -336,7 +336,16 @@ def updates():
             else:
                 flash("Vérification faite : le logiciel est à jour.", "info")
             return redirect(url_for("admin.updates"))
-    if action == "install" and info and info["available"]:
+    restarting = False
+    if action == "restart":
+        audit("redemarrage", "systeme", None, f"version sur disque {updater.get_version()}")
+        db.session.commit()
+        updater.schedule_restart()
+        restarting = True
+    # « Réinstaller » : même version que celle publiée (réparation). Jamais une version plus ancienne.
+    reinstall = action == "install" and request.form.get("reinstall") == "1" and info \
+        and not info["available"] and info["latest"] == info["current"]
+    if action == "install" and info and (info["available"] or reinstall):
         from .models import set_setting
         set_setting("update_skip_version", "")  # installation volontaire : on lève le blocage éventuel
         try:
@@ -354,4 +363,5 @@ def updates():
     return render_template("admin/updates.html", info=info, error=error, log=log, repo=get_setting("github_repo"),
                            status=status, every=get_setting("update_check_hours"),
                            auto_mode=get_setting("update_auto_mode"), install_hour=get_setting("update_install_hour"),
-                           skip_version=get_setting("update_skip_version", "") or "")
+                           skip_version=get_setting("update_skip_version", "") or "", restarting=restarting,
+                           running_version=current_app.config["APP_VERSION"], disk_version=updater.get_version())

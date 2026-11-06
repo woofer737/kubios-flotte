@@ -1,18 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Mises à jour{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3" style="max-width:850px">
+{% set busy = log or restarting %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2" style="max-width:850px">
   <h4 class="mb-0">Mises à jour du logiciel</h4>
-  {% if repo and not log %}
-  <form method="post">
+  {% if repo and not busy %}
+  <form method="post" class="d-flex gap-2">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button name="action" value="check" class="btn btn-outline-primary"><i class="bi bi-arrow-repeat"></i> Vérifier maintenant</button>
+    {% if info and info.available %}
+    <button name="action" value="install" class="btn btn-success"
+            onclick="return confirm('Installer la version {{ info.latest }} maintenant ? Le logiciel redémarrera (environ 15 secondes).')">
+      <i class="bi bi-cloud-download"></i> Installer maintenant</button>
+    {% endif %}
   </form>
   {% endif %}
 </div>
+
+{% if restarting %}
+<div class="alert alert-success" style="max-width:850px"><b>Redémarrage en cours.</b> Rechargez la page dans 15 secondes.</div>
+<script>setTimeout(() => location.href = "{{ url_for('admin.updates') }}", 15000)</script>
+{% elif running_version != disk_version %}
+<div class="alert alert-warning d-flex align-items-center gap-3 flex-wrap" style="max-width:850px">
+  <i class="bi bi-arrow-clockwise fs-4"></i>
+  <div class="flex-grow-1">La version <b>{{ disk_version }}</b> est installée sur le disque, mais le logiciel roule encore la version <b>{{ running_version }}</b>. Un redémarrage est nécessaire pour l'appliquer.</div>
+  <form method="post" onsubmit="return confirm('Redémarrer Kubios maintenant ? Les utilisateurs seront déconnectés environ 15 secondes.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button name="action" value="restart" class="btn btn-warning"><i class="bi bi-arrow-clockwise"></i> Redémarrer maintenant</button>
+  </form>
+</div>
+{% endif %}
+
 <div class="card card-body" style="max-width:850px">
   <div class="d-flex flex-wrap gap-4 mb-3 small">
-    <div><span class="text-muted">Version installée</span><br><b class="fs-5">{{ app_version }}</b></div>
+    <div><span class="text-muted">Version installée</span><br><b class="fs-5">{{ disk_version }}</b></div>
     {% if status.latest %}<div><span class="text-muted">Dernière version publiée</span><br><b class="fs-5">{{ status.latest }}</b></div>{% endif %}
     <div><span class="text-muted">Dernière vérification</span><br><b>{{ status.last_check|datetime if status.last_check else 'jamais' }}</b></div>
     <div><span class="text-muted">Vérification automatique</span><br><b>{{ 'aux ' ~ every ~ ' h' if every and every != '0' else 'désactivée' }}</b></div>
@@ -20,24 +41,33 @@
       <a href="{{ url_for('admin.settings') }}" class="small">modifier</a></div>
   </div>
   {% if skip_version %}<div class="alert alert-warning small">La version <b>{{ skip_version }}</b> a été annulée automatiquement parce qu'elle ne démarrait pas. Elle ne sera pas réinstallée automatiquement : publiez une version corrigée, ou installez-la manuellement ci-dessous.</div>{% endif %}
-  {% if info and info.available and auto_mode == 'nuit' and not log and info.latest != skip_version %}<div class="alert alert-info small"><i class="bi bi-moon-stars"></i> Cette version sera installée automatiquement cette nuit à {{ install_hour }} h. Vous pouvez aussi l'installer maintenant.</div>{% endif %}
   {% if not repo %}
     <div class="alert alert-info mb-0">Configurez le dépôt GitHub dans <a href="{{ url_for('admin.settings') }}">Paramètres</a> pour activer les mises à jour.</div>
   {% endif %}
   {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
   {% if log %}
     <div class="alert alert-success"><b>Mise à jour installée.</b> Le logiciel redémarre : rechargez la page dans 15 secondes.<pre class="mb-0 mt-2 small">{{ log }}</pre></div>
-  {% elif info %}
+  {% elif info and not restarting %}
     {% if info.available %}
-      <div class="alert alert-success d-flex align-items-center gap-2"><i class="bi bi-gift fs-4"></i><div><b>Nouvelle version {{ info.latest }} disponible</b> {% if info.published %}<span class="small">(publiée le {{ info.published[:10] }})</span>{% endif %}</div></div>
+      <div class="alert alert-success d-flex align-items-center gap-2"><i class="bi bi-gift fs-4"></i><div><b>Nouvelle version {{ info.latest }} disponible</b> {% if info.published %}<span class="small">(publiée le {{ info.published[:10] }})</span>{% endif %}
+        {% if auto_mode == 'nuit' and info.latest != skip_version %}<div class="small"><i class="bi bi-moon-stars"></i> Elle sera installée automatiquement cette nuit à {{ install_hour }} h si vous ne l'installez pas maintenant.</div>{% endif %}</div></div>
       {% if info.notes %}<div class="mb-3"><b>Notes de version :</b><pre class="desc small">{{ info.notes }}</pre></div>{% endif %}
-      <form method="post" onsubmit="return confirm('Installer la version {{ info.latest }} ? Le logiciel redémarrera (environ 15 secondes).')">
+      <form method="post" onsubmit="return confirm('Installer la version {{ info.latest }} maintenant ? Le logiciel redémarrera (environ 15 secondes).')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button name="action" value="install" class="btn btn-success"><i class="bi bi-cloud-download"></i> Installer la version {{ info.latest }}</button>
+        <button name="action" value="install" class="btn btn-success btn-lg"><i class="bi bi-cloud-download"></i> Installer maintenant la version {{ info.latest }}</button>
         <div class="form-text">Une sauvegarde complète est faite automatiquement avant l'installation. Vos données (dossier data/) ne sont jamais modifiées.</div>
       </form>
     {% else %}
-      <div class="alert alert-success mb-0"><i class="bi bi-check-circle"></i> Le logiciel est à jour.</div>
+      <div class="alert alert-success d-flex justify-content-between align-items-center flex-wrap gap-2 mb-0">
+        <span><i class="bi bi-check-circle"></i> Le logiciel est à jour.</span>
+        {% if info.latest == info.current %}
+        <form method="post" onsubmit="return confirm('Réinstaller la version {{ info.latest }} depuis GitHub ? Utile pour réparer une installation. Le logiciel redémarrera (environ 15 secondes).')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="reinstall" value="1">
+          <button name="action" value="install" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i> Réinstaller la version {{ info.latest }}</button>
+        </form>
+        {% endif %}
+      </div>
     {% endif %}
   {% endif %}
 </div>
