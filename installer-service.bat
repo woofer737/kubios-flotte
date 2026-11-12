@@ -8,7 +8,7 @@ REM  sous le compte SYSTEM, et se relance tout seul en cas de panne.
 REM ==================================================================
 cd /d "%~dp0"
 net session >nul 2>&1 || (echo Ce script doit etre execute en tant qu'administrateur. & pause & exit /b 1)
-if not exist .venv\Scripts\pythonw.exe (echo Lancez d'abord installer.bat & pause & exit /b 1)
+.venv\Scripts\python.exe -c "import sys" >nul 2>nul || (echo Lancez d'abord installer.bat sur cet ordinateur. & pause & exit /b 1)
 
 set TASK=Kubios Flotte
 set APPDIR=%~dp0
